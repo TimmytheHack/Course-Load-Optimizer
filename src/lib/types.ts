@@ -72,6 +72,7 @@ export interface ScheduleBlock {
   sourceId: string;
   title: string;
   day: Day;
+  sourceDays: Day[];
   startTime: string;
   endTime: string;
   startMinutes: number;
@@ -79,6 +80,11 @@ export interface ScheduleBlock {
   durationHours: number;
   kind: "course" | "commitment";
   color: string;
+  workloadHours?: number;
+  difficulty?: Difficulty;
+  requirement?: RequirementType;
+  category?: CommitmentCategory;
+  deadlines?: Deadline[];
 }
 
 export interface ConflictPair {

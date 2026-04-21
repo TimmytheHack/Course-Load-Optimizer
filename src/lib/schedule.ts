@@ -25,6 +25,7 @@ export function expandCourseBlocks(course: Course): ScheduleBlock[] {
     sourceId: course.id,
     title: course.name,
     day,
+    sourceDays: course.meetingDays,
     startTime: course.startTime,
     endTime: course.endTime,
     startMinutes: timeToMinutes(course.startTime),
@@ -32,6 +33,10 @@ export function expandCourseBlocks(course: Course): ScheduleBlock[] {
     durationHours: getDurationHours(course.startTime, course.endTime),
     kind: "course" as const,
     color: course.color,
+    workloadHours: course.workloadHours,
+    difficulty: course.difficulty,
+    requirement: course.requirement,
+    deadlines: course.deadlines,
   }));
 }
 
@@ -41,6 +46,7 @@ export function expandCommitmentBlocks(commitment: Commitment): ScheduleBlock[] 
     sourceId: commitment.id,
     title: commitment.title,
     day,
+    sourceDays: commitment.meetingDays,
     startTime: commitment.startTime,
     endTime: commitment.endTime,
     startMinutes: timeToMinutes(commitment.startTime),
@@ -48,6 +54,7 @@ export function expandCommitmentBlocks(commitment: Commitment): ScheduleBlock[] 
     durationHours: getDurationHours(commitment.startTime, commitment.endTime),
     kind: "commitment" as const,
     color: commitment.color,
+    category: commitment.category,
   }));
 }
 
@@ -312,9 +319,12 @@ export function getTimetableWindow(blocks: ScheduleBlock[]) {
 
   const earliest = Math.min(...blocks.map((block) => block.startMinutes));
   const latest = Math.max(...blocks.map((block) => block.endMinutes));
+  const BUFFER_MINUTES = 30;
+  const snapDownToHalfHour = (minutes: number) => Math.floor(minutes / 30) * 30;
+  const snapUpToHalfHour = (minutes: number) => Math.ceil(minutes / 30) * 30;
 
   return {
-    start: clamp(Math.floor(earliest / 60) * 60 - 60, 6 * 60, 10 * 60),
-    end: clamp(Math.ceil(latest / 60) * 60 + 60, 18 * 60, 23 * 60),
+    start: clamp(snapDownToHalfHour(earliest - BUFFER_MINUTES), 6 * 60, 10 * 60 + 30),
+    end: clamp(snapUpToHalfHour(latest + BUFFER_MINUTES), 17 * 60 + 30, 23 * 60),
   };
 }

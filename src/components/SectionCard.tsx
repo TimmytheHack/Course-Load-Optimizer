@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 
 interface SectionCardProps {
+  id?: string;
   title: string;
   description?: string;
   action?: ReactNode;
@@ -10,6 +11,7 @@ interface SectionCardProps {
 }
 
 export function SectionCard({
+  id,
   title,
   description,
   action,
@@ -19,6 +21,7 @@ export function SectionCard({
 }: SectionCardProps) {
   return (
     <section
+      id={id}
       className={[
         "panel",
         "relative overflow-hidden",
