@@ -1,7 +1,11 @@
 .next
+.next-build
 build
+.vercel
+vercel-check
 node_modules
 out
 dist
 .DS_Store
 *.log
+*.tsbuildinfo

@@ -14,6 +14,9 @@ function scale(value: number, low: number, high: number) {
 }
 
 export function scorePlan(rawMetrics: {
+  courseCount: number;
+  hardCourseCount: number;
+  deadlineCount: number;
   weeklyClassHours: number;
   weeklyStudyHours: number;
   weeklyCommitmentHours: number;
@@ -22,6 +25,7 @@ export function scorePlan(rawMetrics: {
   backToBackCount: number;
   longGapCount: number;
   totalGapHours: number;
+  busiestDayHours: number;
   heavyDayCount: number;
   examClusterPairs: number;
   tightestExamGapHours: number | null;
@@ -29,42 +33,57 @@ export function scorePlan(rawMetrics: {
   maxClassesOverageDays: number;
   sleepConflictCount: number;
 }) {
+  const courseIntensitySignal =
+    rawMetrics.courseCount + rawMetrics.hardCourseCount * 1.7 + rawMetrics.weeklyClassHours / 8;
+  const workloadSignal =
+    rawMetrics.weeklyStudyHours + rawMetrics.hardCourseCount * 2 + rawMetrics.deadlineCount * 0.6;
+  const dailyBalanceSignal =
+    rawMetrics.heavyDayCount * 2 +
+    rawMetrics.maxStudyOverageDays * 1.5 +
+    rawMetrics.maxClassesOverageDays * 1.25 +
+    Math.max(0, rawMetrics.busiestDayHours - 9);
+  const scheduleFrictionSignal =
+    rawMetrics.backToBackCount * 1.15 +
+    rawMetrics.longGapCount * 1.4 +
+    rawMetrics.totalGapHours / 2.5;
+  const commitmentSignal =
+    rawMetrics.weeklyCommitmentHours / 3 +
+    rawMetrics.commitmentConflictCount * 2 +
+    rawMetrics.sleepConflictCount * 1.5;
+  const examSignal =
+    rawMetrics.examClusterPairs * 2.2 +
+    (rawMetrics.tightestExamGapHours !== null
+      ? Math.max(0, 72 - rawMetrics.tightestExamGapHours) / 18
+      : 0);
+  const conflictSignal =
+    rawMetrics.classConflictCount * 4 + rawMetrics.commitmentConflictCount * 2.5;
+
   const breakdown: ScoreBreakdown = {
-    classLoad: scale(rawMetrics.weeklyClassHours, 9, 18),
-    studyLoad: scale(rawMetrics.weeklyStudyHours, 12, 32),
-    heavyDayPressure: scale(
-      rawMetrics.heavyDayCount + rawMetrics.maxStudyOverageDays + rawMetrics.maxClassesOverageDays,
-      1,
-      6,
-    ),
-    backToBackPressure: scale(rawMetrics.backToBackCount, 1, 6),
-    gapInefficiency: scale(rawMetrics.longGapCount + rawMetrics.totalGapHours / 3, 0.5, 5),
-    commitmentPressure: scale(
-      rawMetrics.weeklyCommitmentHours / 4 +
-        rawMetrics.commitmentConflictCount * 1.5 +
-        rawMetrics.sleepConflictCount,
-      2,
-      10,
-    ),
-    examClustering: scale(
-      rawMetrics.examClusterPairs * 2 +
-        (rawMetrics.tightestExamGapHours !== null ? Math.max(0, 72 - rawMetrics.tightestExamGapHours) / 24 : 0),
-      1,
-      8,
-    ),
+    courseIntensity: scale(courseIntensitySignal, 4.5, 12),
+    workloadIntensity: scale(workloadSignal, 12, 34),
+    dailyBalance: scale(dailyBalanceSignal, 1.5, 10),
+    scheduleFriction: scale(scheduleFrictionSignal, 1, 8),
+    commitmentPressure: scale(commitmentSignal, 2, 11),
+    examPressure: scale(examSignal, 1, 9),
+    conflictPressure: scale(conflictSignal, 0.5, 6),
   };
 
   let stressScore =
-    breakdown.classLoad * 0.2 +
-    breakdown.studyLoad * 0.25 +
-    breakdown.heavyDayPressure * 0.15 +
-    breakdown.backToBackPressure * 0.1 +
-    breakdown.gapInefficiency * 0.1 +
-    breakdown.commitmentPressure * 0.1 +
-    breakdown.examClustering * 0.1;
+    breakdown.courseIntensity * 0.14 +
+    breakdown.workloadIntensity * 0.24 +
+    breakdown.dailyBalance * 0.18 +
+    breakdown.scheduleFriction * 0.12 +
+    breakdown.commitmentPressure * 0.11 +
+    breakdown.examPressure * 0.11 +
+    breakdown.conflictPressure * 0.1;
 
-  stressScore += rawMetrics.classConflictCount * 12;
-  stressScore += rawMetrics.commitmentConflictCount * 4;
+  if (rawMetrics.classConflictCount > 0) {
+    stressScore = Math.max(stressScore, 78 + rawMetrics.classConflictCount * 8);
+  }
+
+  if (rawMetrics.commitmentConflictCount > 0) {
+    stressScore += 4 + rawMetrics.commitmentConflictCount * 3;
+  }
 
   const clamped = Math.round(clamp(stressScore, 0, 100));
 

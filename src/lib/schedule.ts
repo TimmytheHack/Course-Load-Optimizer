@@ -250,6 +250,8 @@ export function analyzePlanSchedule(
   });
 
   const busiestDay = [...dayLoads].sort((left, right) => right.totalHours - left.totalHours)[0]?.day ?? "Mon";
+  const busiestDayHours =
+    [...dayLoads].sort((left, right) => right.totalHours - left.totalHours)[0]?.totalHours ?? 0;
   const heavyDayCount = dayLoads.filter(
     (day) =>
       day.totalHours >= 10 ||
@@ -267,6 +269,9 @@ export function analyzePlanSchedule(
     commitmentBlocks.reduce((sum, block) => sum + block.durationHours, 0),
   );
   const weeklyStudyHours = roundTo(courses.reduce((sum, course) => sum + course.workloadHours, 0));
+  const courseCount = courses.length;
+  const hardCourseCount = courses.filter((course) => course.difficulty === "hard").length;
+  const deadlineCount = courses.reduce((sum, course) => sum + course.deadlines.length, 0);
   const sleepConflictCount = allBlocks.filter((block) => isSleepConflict(block, preferences)).length;
 
   return {
@@ -277,6 +282,9 @@ export function analyzePlanSchedule(
     classConflicts,
     commitmentConflicts,
     metrics: {
+      courseCount,
+      hardCourseCount,
+      deadlineCount,
       weeklyClassHours,
       weeklyStudyHours,
       weeklyCommitmentHours,
@@ -286,6 +294,7 @@ export function analyzePlanSchedule(
       longGapCount,
       totalGapHours,
       busiestDay,
+      busiestDayHours,
       heavyDayCount,
       examClusterPairs,
       tightestExamGapHours,

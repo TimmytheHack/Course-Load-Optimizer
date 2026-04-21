@@ -66,9 +66,12 @@ export function usePlannerState() {
       const stored = window.localStorage.getItem(STORAGE_KEY);
       if (stored) {
         setState(JSON.parse(stored) as PlannerState);
+      } else {
+        setState(samplePlannerState);
       }
     } catch {
       window.localStorage.removeItem(STORAGE_KEY);
+      setState(samplePlannerState);
     } finally {
       setIsHydrated(true);
     }

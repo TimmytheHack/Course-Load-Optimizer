@@ -107,16 +107,19 @@ export interface DayLoad {
 }
 
 export interface ScoreBreakdown {
-  classLoad: number;
-  studyLoad: number;
-  heavyDayPressure: number;
-  backToBackPressure: number;
-  gapInefficiency: number;
+  courseIntensity: number;
+  workloadIntensity: number;
+  dailyBalance: number;
+  scheduleFriction: number;
   commitmentPressure: number;
-  examClustering: number;
+  examPressure: number;
+  conflictPressure: number;
 }
 
 export interface ScheduleMetrics {
+  courseCount: number;
+  hardCourseCount: number;
+  deadlineCount: number;
   weeklyClassHours: number;
   weeklyStudyHours: number;
   weeklyCommitmentHours: number;
@@ -126,6 +129,7 @@ export interface ScheduleMetrics {
   longGapCount: number;
   totalGapHours: number;
   busiestDay: Day;
+  busiestDayHours: number;
   heavyDayCount: number;
   examClusterPairs: number;
   tightestExamGapHours: number | null;

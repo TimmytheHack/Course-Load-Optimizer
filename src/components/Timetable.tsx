@@ -27,8 +27,19 @@ export function Timetable({ classBlocks, commitmentBlocks }: TimetableProps) {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <div className="grid min-w-[920px] grid-cols-[72px_repeat(7,minmax(112px,1fr))] gap-px rounded-[28px] border border-slate-200 bg-slate-200 p-px">
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600">
+          <span className="h-2.5 w-2.5 rounded-full bg-slate-900" />
+          Class block
+        </span>
+        <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600">
+          <span className="h-2.5 w-2.5 rounded-full bg-slate-400" />
+          Commitment block
+        </span>
+      </div>
+      <div className="overflow-x-auto">
+      <div className="grid min-w-[920px] grid-cols-[76px_repeat(7,minmax(112px,1fr))] gap-px rounded-[28px] border border-slate-200/80 bg-slate-200 p-px shadow-[0_12px_30px_rgba(15,23,42,0.04)]">
         <div className="bg-slate-50" />
         {DAYS.map((day) => (
           <div
@@ -46,7 +57,9 @@ export function Timetable({ classBlocks, commitmentBlocks }: TimetableProps) {
               className="absolute inset-x-0 border-t border-dashed border-slate-200 px-3 text-xs text-slate-400"
               style={{ top: `${((time - window.start) / totalMinutes) * 100}%` }}
             >
-              <span className="-translate-y-1/2 block bg-white">{formatTimeLabel(`${String(Math.floor(time / 60)).padStart(2, "0")}:00`)}</span>
+              <span className="-translate-y-1/2 block rounded-full bg-white pr-2">
+                {formatTimeLabel(`${String(Math.floor(time / 60)).padStart(2, "0")}:00`)}
+              </span>
             </div>
           ))}
         </div>
@@ -75,7 +88,7 @@ export function Timetable({ classBlocks, commitmentBlocks }: TimetableProps) {
                     className={[
                       "absolute inset-x-2 overflow-hidden rounded-2xl border px-3 py-2 shadow-sm",
                       block.color,
-                      block.kind === "commitment" ? "opacity-80" : "",
+                      block.kind === "commitment" ? "opacity-85 saturate-[0.82]" : "",
                     ].join(" ")}
                     style={{ top: `${top}%`, height: `${Math.max(height, 8)}%` }}
                   >
@@ -92,6 +105,7 @@ export function Timetable({ classBlocks, commitmentBlocks }: TimetableProps) {
             </div>
           );
         })}
+      </div>
       </div>
     </div>
   );

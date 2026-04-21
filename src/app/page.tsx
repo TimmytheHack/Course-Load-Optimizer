@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 
 import { CommitmentForm } from "@/components/CommitmentForm";
 import { CommitmentList } from "@/components/CommitmentList";
@@ -64,6 +64,7 @@ const SNAPSHOT_TILES = [
 
 export default function HomePage() {
   const workspaceRef = useRef<HTMLElement | null>(null);
+  const comparisonRef = useRef<HTMLElement | null>(null);
   const {
     state,
     isHydrated,
@@ -123,28 +124,46 @@ export default function HomePage() {
   const activeAnalysis =
     analyses.find((analysis) => analysis.planId === state.activePlanId) ?? analyses[0];
   const bestPlan = summarizeBestPlan(analyses);
+  const hasPlannerData = state.courses.length > 0 || state.commitments.length > 0;
+  const isDemoState = useMemo(
+    () => state.plans.some((plan) => Boolean(plan.profileLabel)),
+    [state.plans],
+  );
+  const demoPlans = analyses.map((analysis) => ({
+    name: analysis.planName,
+    profileLabel: analysis.planProfileLabel,
+    stressScore: analysis.metrics.stressScore,
+    stressLabel: analysis.metrics.stressLabel,
+  }));
 
-  function scrollToWorkspace() {
+  function scrollToTarget(target: HTMLElement | null) {
     requestAnimationFrame(() => {
-      workspaceRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      target?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   }
 
   function handleSampleLoad() {
     loadSampleSemester();
-    scrollToWorkspace();
+    scrollToTarget(comparisonRef.current);
   }
 
   function handleBuildOwn() {
     resetPlanner();
-    scrollToWorkspace();
+    scrollToTarget(workspaceRef.current);
+  }
+
+  function handleJumpToComparison() {
+    scrollToTarget(comparisonRef.current);
   }
 
   if (!isHydrated) {
     return (
       <main className="min-h-screen px-4 py-10 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <LandingHero onTrySample={handleSampleLoad} onBuildOwn={handleBuildOwn} />
+          <LandingHero
+            onTrySample={handleSampleLoad}
+            onBuildOwn={handleBuildOwn}
+          />
           <div className="mt-8 panel text-sm text-slate-500">Loading saved planner…</div>
         </div>
       </main>
@@ -154,102 +173,58 @@ export default function HomePage() {
   return (
     <main className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-8">
-        <LandingHero onTrySample={handleSampleLoad} onBuildOwn={handleBuildOwn} />
+        <LandingHero
+          onTrySample={handleSampleLoad}
+          onBuildOwn={handleBuildOwn}
+          onJumpToComparison={hasPlannerData ? handleJumpToComparison : undefined}
+          isSampleLoaded={isDemoState}
+          bestPlanName={bestPlan?.planName ?? null}
+          demoPlans={isDemoState ? demoPlans : []}
+        />
 
-        <section ref={workspaceRef} className="space-y-6">
+        {hasPlannerData ? (
+        <section ref={comparisonRef} className="space-y-6">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
-                Planner Workspace
+                Demo Comparison
               </p>
               <h2 className="mt-2 text-3xl font-serif text-slate-950">
-                Compare the real tradeoffs before registration
-              </h2>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <button type="button" className="button-secondary" onClick={handleSampleLoad}>
-                Load sample data
-              </button>
-              <button type="button" className="button-secondary" onClick={handleBuildOwn}>
-                Clear planner
-              </button>
-            </div>
-          </div>
-
-          <div className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
-            <div className="space-y-6">
-              <SectionCard
-                title="Course Input"
-                description="Add courses manually with time, workload, difficulty, and major deadlines."
-              >
-                <CourseForm courses={state.courses} onAddCourse={addCourse} />
-              </SectionCard>
-
-              <SectionCard
-                title="Commitment Input"
-                description="Include work, clubs, exercise, or personal blocks so schedule analysis stays realistic."
-              >
-                <CommitmentForm onAddCommitment={addCommitment} />
-              </SectionCard>
-
-              <SectionCard
-                title="Preferences"
-                description="Set the sleep and daily capacity limits used by the scoring engine."
-              >
-                <PreferencesCard preferences={state.preferences} onUpdate={updatePreferences} />
-              </SectionCard>
-            </div>
-
-            <div className="space-y-6">
-              <SectionCard
-                title="Plan Builder"
-                description="Assign every course to any combination of Plan A, Plan B, and Plan C."
-                action={
-                  <span className="badge-soft">
-                    {state.courses.length} courses · {state.commitments.length} commitments
-                  </span>
-                }
-              >
-                <PlanTabs
-                  analyses={analyses}
-                  activePlanId={state.activePlanId}
-                  onChange={setActivePlan}
-                />
-                <div className="mt-6">
-                  <CourseLibrary
-                    courses={state.courses}
-                    plans={state.plans}
-                    activePlanId={state.activePlanId}
-                    onTogglePlan={toggleCourseInPlan}
-                    onRemove={removeCourse}
-                  />
-                </div>
-              </SectionCard>
-
-              <SectionCard
-                title="Outside Commitments"
-                description="These recurring blocks stay active across every candidate plan."
-              >
-                <CommitmentList commitments={state.commitments} onRemove={removeCommitment} />
-              </SectionCard>
-            </div>
-          </div>
-        </section>
-
-        <section className="space-y-6">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
-                Candidate Plans
-              </p>
-              <h2 className="mt-2 text-3xl font-serif text-slate-950">
-                Stress score cards make the comparison obvious
+                Three plans, three very different semester outcomes
               </h2>
             </div>
             <p className="max-w-xl text-sm leading-6 text-slate-600">
-              The score blends class load, study load, heavy-day pressure, inefficient gaps,
-              commitment pressure, and exam clustering on a 0 to 100 scale.
+              The fastest demo path is simple: show Plan A as the risky option, point to Plan B as the realistic choice, then use Plan C to prove that deadline timing matters just as much as calendar fit.
             </p>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-3">
+            <div className="rounded-[28px] border border-slate-200/80 bg-white/90 p-5 shadow-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                1. Start Here
+              </p>
+              <p className="mt-2 text-base font-semibold text-slate-950">Plan A shows obvious overload risk</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                The active plan opens on the hardest path so the problem is visible immediately.
+              </p>
+            </div>
+            <div className="rounded-[28px] border border-slate-200/80 bg-white/90 p-5 shadow-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                2. Contrast
+              </p>
+              <p className="mt-2 text-base font-semibold text-slate-950">Plan B is the easy recommendation</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                It should win on conflicts, overall pressure, and recommendation clarity.
+              </p>
+            </div>
+            <div className="rounded-[28px] border border-slate-200/80 bg-white/90 p-5 shadow-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                3. Reveal
+              </p>
+              <p className="mt-2 text-base font-semibold text-slate-950">Plan C proves the app goes beyond a timetable</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                The week looks manageable until the exam cluster risk shows up in the score and guidance.
+              </p>
+            </div>
           </div>
           <StressLegend />
           <div className="grid gap-4 lg:grid-cols-3">
@@ -261,8 +236,16 @@ export default function HomePage() {
               />
             ))}
           </div>
+          <SectionCard
+            title="Side-by-Side Comparison"
+            description="Use this table early in the demo to make the product value obvious before you drill into a single plan."
+          >
+            <ComparisonTable analyses={analyses} bestPlanSummary={bestPlan?.summary ?? null} />
+          </SectionCard>
         </section>
+        ) : null}
 
+        {hasPlannerData ? (
         <section className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_360px]">
           <SectionCard
             title={`${activeAnalysis.planName} Analysis Snapshot`}
@@ -339,7 +322,9 @@ export default function HomePage() {
             </div>
           </SectionCard>
         </section>
+        ) : null}
 
+        {hasPlannerData ? (
         <section className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_360px]">
           <SectionCard
             title="Weekly Timetable"
@@ -367,21 +352,97 @@ export default function HomePage() {
             </SectionCard>
           </div>
         </section>
+        ) : null}
 
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+        {hasPlannerData ? (
+        <section className="space-y-6">
           <SectionCard
             title="Workload by Weekday"
             description="Class, study, and commitment hours stacked across the week for the active plan."
           >
             <WeekdayWorkloadChart dayLoads={activeAnalysis.dayLoads} />
           </SectionCard>
+        </section>
+        ) : null}
 
-          <SectionCard
-            title="Side-by-Side Comparison"
-            description="Choose the schedule that best balances workload, conflicts, and deadline timing."
-          >
-            <ComparisonTable analyses={analyses} bestPlanSummary={bestPlan?.summary ?? null} />
-          </SectionCard>
+        <section ref={workspaceRef} className="space-y-6">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+                Planner Workspace
+              </p>
+              <h2 className="mt-2 text-3xl font-serif text-slate-950">
+                Customize the sample or build your own plan
+              </h2>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <button type="button" className="button-secondary" onClick={handleSampleLoad}>
+                Load demo sample
+              </button>
+              <button type="button" className="button-secondary" onClick={handleBuildOwn}>
+                Start blank
+              </button>
+            </div>
+          </div>
+
+          <div className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
+            <div className="space-y-6">
+              <SectionCard
+                title="Course Input"
+                description="Add courses manually with time, workload, difficulty, and major deadlines."
+              >
+                <CourseForm courses={state.courses} onAddCourse={addCourse} />
+              </SectionCard>
+
+              <SectionCard
+                title="Commitment Input"
+                description="Include work, clubs, exercise, or personal blocks so schedule analysis stays realistic."
+              >
+                <CommitmentForm onAddCommitment={addCommitment} />
+              </SectionCard>
+
+              <SectionCard
+                title="Preferences"
+                description="Set the sleep and daily capacity limits used by the scoring engine."
+              >
+                <PreferencesCard preferences={state.preferences} onUpdate={updatePreferences} />
+              </SectionCard>
+            </div>
+
+            <div className="space-y-6">
+              <SectionCard
+                title="Plan Builder"
+                description="Assign every course to any combination of Plan A, Plan B, and Plan C."
+                action={
+                  <span className="badge-soft">
+                    {state.courses.length} courses · {state.commitments.length} commitments
+                  </span>
+                }
+              >
+                <PlanTabs
+                  analyses={analyses}
+                  activePlanId={state.activePlanId}
+                  onChange={setActivePlan}
+                />
+                <div className="mt-6">
+                  <CourseLibrary
+                    courses={state.courses}
+                    plans={state.plans}
+                    activePlanId={state.activePlanId}
+                    onTogglePlan={toggleCourseInPlan}
+                    onRemove={removeCourse}
+                  />
+                </div>
+              </SectionCard>
+
+              <SectionCard
+                title="Outside Commitments"
+                description="These recurring blocks stay active across every candidate plan."
+              >
+                <CommitmentList commitments={state.commitments} onRemove={removeCommitment} />
+              </SectionCard>
+            </div>
+          </div>
         </section>
       </div>
     </main>
