@@ -256,7 +256,6 @@ export default function HomePage() {
           onJumpToComparison={hasPlannerData ? handleJumpToComparison : undefined}
           isSampleLoaded={isDemoState}
           bestPlanName={bestPlan?.planName ?? null}
-          bestPlanSummary={bestPlan?.summary ?? null}
           demoPlans={isDemoState ? demoPlans : []}
         />
 
@@ -265,8 +264,6 @@ export default function HomePage() {
             analyses={analyses}
             activePlanId={state.activePlanId}
             recommendedPlanId={bestPlan?.planId ?? null}
-            recommendedTitle={bestPlan?.title ?? null}
-            recommendedDescription={bestPlan?.description ?? null}
             onChange={setActivePlan}
           />
         ) : null}
@@ -377,15 +374,16 @@ export default function HomePage() {
           <div className="space-y-6">
             <SectionCard
               title="Plan summary"
-              description="A quick read on the active option before you inspect the visuals."
+              description="Quick read before you inspect the visuals."
+              compact
             >
               <PlanContentTransition motionKey={`summary-${state.activePlanId}`}>
-                <div className="space-y-4">
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-4">
+                <div className="space-y-3">
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-3.5">
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                       Stress score
                     </p>
-                    <p className="mt-3 text-3xl font-semibold text-slate-950">
+                    <p className="mt-2.5 text-3xl font-semibold text-slate-950">
                       {activeAnalysis.metrics.stressScore}
                     </p>
                     <p className="mt-1 text-sm capitalize text-slate-600">
@@ -393,7 +391,7 @@ export default function HomePage() {
                     </p>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-3xl border border-slate-200 bg-white p-4">
+                    <div className="rounded-3xl border border-slate-200 bg-white p-3.5">
                       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                         Weekly commitments
                       </p>
@@ -401,7 +399,7 @@ export default function HomePage() {
                         {formatHours(activeAnalysis.metrics.weeklyCommitmentHours)}
                       </p>
                     </div>
-                    <div className="rounded-3xl border border-slate-200 bg-white p-4">
+                    <div className="rounded-3xl border border-slate-200 bg-white p-3.5">
                       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                         Tightest exam gap
                       </p>
@@ -419,6 +417,7 @@ export default function HomePage() {
             <SectionCard
               title="Warnings"
               description="The biggest risks in the active plan."
+              compact
             >
               <PlanContentTransition motionKey={`warnings-${state.activePlanId}`}>
                 <WarningList warnings={activeAnalysis.warnings} />
@@ -428,6 +427,7 @@ export default function HomePage() {
             <SectionCard
               title="Why this plan works"
               description="Short guidance on whether to keep, lighten, or rebuild it."
+              compact
             >
               <PlanContentTransition motionKey={`recommendations-${state.activePlanId}`}>
                 <RecommendationPanel recommendations={activeAnalysis.recommendations} />
@@ -438,10 +438,11 @@ export default function HomePage() {
         ) : null}
 
         {hasPlannerData ? (
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+        <section className="grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
           <SectionCard
             title={`${activeAnalysis.planName} timetable`}
             description="Course blocks and recurring commitments appear together so pressure points are easy to spot."
+            compact
           >
             <PlanContentTransition motionKey={`timetable-${state.activePlanId}`}>
               <Timetable
@@ -454,6 +455,7 @@ export default function HomePage() {
           <SectionCard
             title="Weekly workload"
             description="See where class, study, and commitments stack up across the week."
+            compact
           >
             <PlanContentTransition motionKey={`workload-${state.activePlanId}`}>
               <WeekdayWorkloadChart dayLoads={activeAnalysis.dayLoads} />
@@ -462,7 +464,7 @@ export default function HomePage() {
         </section>
         ) : null}
 
-        <section ref={workspaceRef} className="space-y-6">
+        <section ref={workspaceRef} className="space-y-5">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
@@ -482,11 +484,12 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
-            <div className="space-y-6">
+          <div className="grid gap-5 xl:grid-cols-[380px_minmax(0,1fr)]">
+            <div className="space-y-5">
               <SectionCard
                 title="Course setup"
                 description="Enter class times, weekly workload, difficulty, and major deadlines."
+                compact
               >
                 <CourseForm courses={state.courses} onAddCourse={addCourse} />
               </SectionCard>
@@ -494,6 +497,7 @@ export default function HomePage() {
               <SectionCard
                 title="Commitments"
                 description="Include work, clubs, exercise, or other recurring time outside class."
+                compact
               >
                 <CommitmentForm onAddCommitment={addCommitment} />
               </SectionCard>
@@ -501,15 +505,17 @@ export default function HomePage() {
               <SectionCard
                 title="Preferences"
                 description="Set the limits used to flag heavy days and sleep conflicts."
+                compact
               >
                 <PreferencesCard preferences={state.preferences} onUpdate={updatePreferences} />
               </SectionCard>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-5">
               <SectionCard
                 title="Edit plans"
                 description="Toggle courses into any plan and the recommendation updates immediately."
+                compact
                 action={
                   <span className="badge-soft">
                     {state.courses.length} courses · {state.commitments.length} commitments
@@ -522,7 +528,7 @@ export default function HomePage() {
                   recommendedPlanId={bestPlan?.planId ?? null}
                   onChange={setActivePlan}
                 />
-                <div className="mt-6">
+                <div className="mt-5">
                   <CourseLibrary
                     courses={state.courses}
                     plans={state.plans}
@@ -536,6 +542,7 @@ export default function HomePage() {
               <SectionCard
                 title="Outside commitments"
                 description="These recurring blocks stay active across every candidate plan."
+                compact
               >
                 <CommitmentList commitments={state.commitments} onRemove={removeCommitment} />
               </SectionCard>

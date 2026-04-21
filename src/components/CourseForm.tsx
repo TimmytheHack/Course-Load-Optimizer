@@ -59,7 +59,7 @@ export function CourseForm({ courses, onAddCourse }: CourseFormProps) {
   }
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
+    <form className="space-y-3.5" onSubmit={handleSubmit}>
       <div>
         <label className="field-label" htmlFor="course-name">
           Course name
@@ -80,7 +80,7 @@ export function CourseForm({ courses, onAddCourse }: CourseFormProps) {
         {errors.meetingDays ? <p className="field-error">{errors.meetingDays}</p> : null}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <label className="field-label" htmlFor="course-start-time">
             Start time
@@ -113,7 +113,7 @@ export function CourseForm({ courses, onAddCourse }: CourseFormProps) {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-3">
         <div>
           <label className="field-label" htmlFor="course-workload">
             Weekly workload
@@ -175,8 +175,8 @@ export function CourseForm({ courses, onAddCourse }: CourseFormProps) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
-        <div className="mb-3 flex items-center justify-between gap-3">
+      <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3.5">
+        <div className="mb-2.5 flex items-center justify-between gap-3">
           <label className="field-label m-0">Exam dates / major deadlines</label>
           <button
             type="button"
@@ -191,9 +191,9 @@ export function CourseForm({ courses, onAddCourse }: CourseFormProps) {
             + Add deadline
           </button>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {draft.deadlines.map((deadline, index) => (
-            <div key={`${deadline.title}-${index}`} className="grid gap-3 sm:grid-cols-[1fr_auto_auto]">
+            <div key={`${deadline.title}-${index}`} className="grid gap-2.5 sm:grid-cols-[1fr_auto_auto]">
               <input
                 className="input-field"
                 value={deadline.title}

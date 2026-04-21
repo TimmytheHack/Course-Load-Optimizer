@@ -20,31 +20,31 @@ export function Timetable({ classBlocks, commitmentBlocks }: TimetableProps) {
 
   if (blocks.length === 0) {
     return (
-      <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/80 px-6 py-12 text-center text-sm text-slate-500">
+      <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/80 px-6 py-10 text-center text-sm text-slate-500">
         Assign a few courses to the active plan to render the weekly timetable.
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600">
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-1.5">
+        <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600">
           <span className="h-2.5 w-2.5 rounded-full bg-slate-900" />
           Class block
         </span>
-        <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600">
+        <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600">
           <span className="h-2.5 w-2.5 rounded-full bg-slate-400" />
           Commitment block
         </span>
       </div>
-      <div className="overflow-x-auto">
-      <div className="grid min-w-[920px] grid-cols-[76px_repeat(7,minmax(112px,1fr))] gap-px rounded-[28px] border border-slate-200/80 bg-slate-200 p-px shadow-[0_12px_30px_rgba(15,23,42,0.04)]">
+      <div className="overflow-x-auto rounded-[26px] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(248,250,252,0.82),rgba(255,255,255,0.96))] p-2 shadow-[0_12px_30px_rgba(15,23,42,0.04)]">
+      <div className="grid min-w-[920px] grid-cols-[72px_repeat(7,minmax(108px,1fr))] gap-px rounded-[22px] bg-slate-200">
         <div className="bg-slate-50" />
         {DAYS.map((day) => (
           <div
             key={day}
-            className="bg-slate-50 px-3 py-3 text-center text-sm font-semibold text-slate-700"
+            className="bg-slate-50 px-3 py-2.5 text-center text-sm font-semibold text-slate-700"
           >
             {day}
           </div>
@@ -54,7 +54,7 @@ export function Timetable({ classBlocks, commitmentBlocks }: TimetableProps) {
           {hours.map((time) => (
             <div
               key={time}
-              className="absolute inset-x-0 border-t border-dashed border-slate-200 px-3 text-xs text-slate-400"
+              className="absolute inset-x-0 border-t border-dashed border-slate-200 px-2.5 text-[11px] text-slate-400"
               style={{ top: `${((time - window.start) / totalMinutes) * 100}%` }}
             >
               <span className="-translate-y-1/2 block rounded-full bg-white pr-2">
@@ -86,7 +86,7 @@ export function Timetable({ classBlocks, commitmentBlocks }: TimetableProps) {
                   <article
                     key={block.id}
                     className={[
-                      "absolute inset-x-2 overflow-hidden rounded-2xl border px-3 py-2 shadow-sm",
+                      "absolute inset-x-1.5 overflow-hidden rounded-2xl border px-2.5 py-2 shadow-sm",
                       block.color,
                       block.kind === "commitment" ? "opacity-85 saturate-[0.82]" : "",
                     ].join(" ")}

@@ -4,7 +4,6 @@ interface LandingHeroProps {
   onJumpToComparison?: () => void;
   isSampleLoaded?: boolean;
   bestPlanName?: string | null;
-  bestPlanSummary?: string | null;
   demoPlans?: Array<{
     name: string;
     profileLabel?: string;
@@ -19,7 +18,6 @@ export function LandingHero({
   onJumpToComparison,
   isSampleLoaded = false,
   bestPlanName = null,
-  bestPlanSummary = null,
   demoPlans = [],
 }: LandingHeroProps) {
   const planPreview =
@@ -36,6 +34,18 @@ export function LandingHero({
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.9),transparent_28%),radial-gradient(circle_at_85%_15%,rgba(148,163,184,0.16),transparent_25%)]" />
       <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 bg-[radial-gradient(circle_at_top,rgba(148,163,184,0.12),transparent_60%)] lg:block" />
       <div className="relative space-y-5">
+        <div className="max-w-2xl">
+          <p className="inline-flex rounded-full border border-slate-200/80 bg-white/85 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 shadow-sm">
+            {isSampleLoaded ? "Sample semester" : "Semester planner"}
+          </p>
+          <h1 className="mt-4 max-w-2xl font-serif text-4xl leading-tight text-slate-950 sm:text-5xl lg:text-[3.6rem] lg:leading-[1.02]">
+            Course Load Optimizer
+          </h1>
+          <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-700">
+            Compare three semester options and keep the one that stays sustainable, not just schedulable.
+          </p>
+        </div>
+
         <div className="grid gap-3 sm:grid-cols-3">
           {planPreview.map((plan) => {
             const isRecommended = bestPlanName === plan.name;
@@ -79,49 +89,35 @@ export function LandingHero({
           })}
         </div>
 
-        <div className="rounded-[28px] border border-slate-900 bg-[linear-gradient(150deg,#0f172a,#1f2937)] p-5 text-white shadow-[0_24px_50px_rgba(15,23,42,0.16)]">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/60">
-            Recommended plan
-          </p>
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <h2 className="text-2xl font-semibold text-white">
-              {bestPlanName ?? "Plan B"}
-            </h2>
-            {bestPlanName ? (
-              <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-sm font-semibold text-white">
+        <div className="rounded-[24px] border border-slate-900/10 bg-slate-900 px-4 py-3 text-white shadow-[0_18px_36px_rgba(15,23,42,0.12)] sm:flex sm:items-center sm:justify-between sm:gap-4">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">
+              Recommended plan
+            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <p className="text-base font-semibold text-white">{bestPlanName ?? "Plan B"}</p>
+              <span className="rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[11px] font-semibold text-white">
                 Lowest pressure
               </span>
-            ) : null}
+            </div>
           </div>
-          <p className="mt-3 text-sm leading-6 text-white/85">
-            {bestPlanSummary ??
-              "Keeps workload, conflicts, commitments, and deadlines in a healthier range."}
+          <p className="mt-2 text-sm text-white/75 sm:mt-0 sm:text-right">
+            Best fit at a glance.
           </p>
         </div>
 
-        <div className="max-w-2xl">
-          <p className="inline-flex rounded-full border border-slate-200/80 bg-white/85 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 shadow-sm">
-            {isSampleLoaded ? "Sample semester" : "Semester planner"}
-          </p>
-          <h1 className="mt-4 max-w-2xl font-serif text-4xl leading-tight text-slate-950 sm:text-5xl lg:text-[3.6rem] lg:leading-[1.02]">
-            Course Load Optimizer
-          </h1>
-          <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-700">
-            Compare three semester options and keep the one that stays sustainable, not just schedulable.
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <button type="button" onClick={onTrySample} className="button-primary">
-              {isSampleLoaded ? "Reload sample semester" : "Try sample semester"}
+        <div className="flex flex-wrap gap-3">
+          <button type="button" onClick={onTrySample} className="button-primary">
+            {isSampleLoaded ? "Reload sample semester" : "Try sample semester"}
+          </button>
+          <button type="button" onClick={onBuildOwn} className="button-secondary">
+            Build your own plan
+          </button>
+          {onJumpToComparison ? (
+            <button type="button" onClick={onJumpToComparison} className="button-tertiary">
+              Compare plans
             </button>
-            <button type="button" onClick={onBuildOwn} className="button-secondary">
-              Build your own plan
-            </button>
-            {onJumpToComparison ? (
-              <button type="button" onClick={onJumpToComparison} className="button-tertiary">
-                Compare plans
-              </button>
-            ) : null}
-          </div>
+          ) : null}
         </div>
       </div>
     </section>

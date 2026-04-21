@@ -45,7 +45,7 @@ export function CommitmentForm({ onAddCommitment }: CommitmentFormProps) {
   }
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
+    <form className="space-y-3" onSubmit={handleSubmit}>
       <div>
         <label className="field-label" htmlFor="commitment-title">
           Commitment name
@@ -60,65 +60,79 @@ export function CommitmentForm({ onAddCommitment }: CommitmentFormProps) {
         {errors.title ? <p className="field-error">{errors.title}</p> : null}
       </div>
 
-      <div>
-        <label className="field-label" htmlFor="commitment-category">
-          Category
-        </label>
-        <select
-          id="commitment-category"
-          className="input-field"
-          value={draft.category}
-          onChange={(event) =>
-            setDraft((current) => ({
-              ...current,
-              category: event.target.value as CommitmentDraft["category"],
-            }))
-          }
-        >
-          <option value="job">Part-time job</option>
-          <option value="club">Club / extracurricular</option>
-          <option value="exercise">Exercise / personal time</option>
-          <option value="personal">Personal block</option>
-          <option value="other">Other</option>
-        </select>
-      </div>
-
-      <div>
-        <label className="field-label">Meeting days</label>
-        <DayPicker selectedDays={draft.meetingDays} onToggleDay={toggleDay} />
-        {errors.meetingDays ? <p className="field-error">{errors.meetingDays}</p> : null}
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="space-y-3 rounded-[22px] border border-slate-200 bg-slate-50/70 p-3.5">
         <div>
-          <label className="field-label" htmlFor="commitment-start-time">
-            Start time
-          </label>
-          <input
-            id="commitment-start-time"
-            type="time"
-            className="input-field"
-            value={draft.startTime}
-            onChange={(event) =>
-              setDraft((current) => ({ ...current, startTime: event.target.value }))
-            }
-          />
-          {errors.startTime ? <p className="field-error">{errors.startTime}</p> : null}
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+            Commitment details
+          </p>
+          <div className="mt-2">
+            <label className="field-label" htmlFor="commitment-category">
+              Category
+            </label>
+            <select
+              id="commitment-category"
+              className="input-field"
+              value={draft.category}
+              onChange={(event) =>
+                setDraft((current) => ({
+                  ...current,
+                  category: event.target.value as CommitmentDraft["category"],
+                }))
+              }
+            >
+              <option value="job">Part-time job</option>
+              <option value="club">Club / extracurricular</option>
+              <option value="exercise">Exercise / personal time</option>
+              <option value="personal">Personal block</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
         </div>
+
         <div>
-          <label className="field-label" htmlFor="commitment-end-time">
-            End time
-          </label>
-          <input
-            id="commitment-end-time"
-            type="time"
-            className="input-field"
-            value={draft.endTime}
-            onChange={(event) =>
-              setDraft((current) => ({ ...current, endTime: event.target.value }))
-            }
-          />
-          {errors.endTime ? <p className="field-error">{errors.endTime}</p> : null}
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+            Schedule
+          </p>
+          <div className="mt-2 space-y-3">
+            <div>
+              <label className="field-label">Meeting days</label>
+              <DayPicker selectedDays={draft.meetingDays} onToggleDay={toggleDay} />
+              {errors.meetingDays ? <p className="field-error">{errors.meetingDays}</p> : null}
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="field-label" htmlFor="commitment-start-time">
+                  Start time
+                </label>
+                <input
+                  id="commitment-start-time"
+                  type="time"
+                  className="input-field"
+                  value={draft.startTime}
+                  onChange={(event) =>
+                    setDraft((current) => ({ ...current, startTime: event.target.value }))
+                  }
+                />
+                {errors.startTime ? <p className="field-error">{errors.startTime}</p> : null}
+              </div>
+              <div>
+                <label className="field-label" htmlFor="commitment-end-time">
+                  End time
+                </label>
+                <input
+                  id="commitment-end-time"
+                  type="time"
+                  className="input-field"
+                  value={draft.endTime}
+                  onChange={(event) =>
+                    setDraft((current) => ({ ...current, endTime: event.target.value }))
+                  }
+                />
+                {errors.endTime ? <p className="field-error">{errors.endTime}</p> : null}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

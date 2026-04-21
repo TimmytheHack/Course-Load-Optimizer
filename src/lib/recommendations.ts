@@ -177,31 +177,39 @@ export function buildRecommendations(analysis: PlanAnalysis) {
     recommendations.push("This is the lightest option overall.");
   }
 
-  recommendations.push(`The biggest driver is ${primaryDriverText ?? "overall workload"}.`);
+  recommendations.push(
+    `The main pressure comes from ${primaryDriverText ?? "overall workload"}.`,
+  );
 
   if (metrics.classConflictCount > 0) {
     recommendations.push(
-      "Start by moving or dropping one of the overlapping class sections.",
+      "Move or drop one of the overlapping class sections first.",
     );
   } else if (metrics.commitmentConflictCount > 0) {
     recommendations.push(
-      "Start by adjusting the overlapping commitment block or swapping that class section.",
+      "Adjust the overlapping commitment block or swap that class section first.",
     );
   } else if (metrics.examClusterPairs > 0) {
     recommendations.push(
-      "Start by separating one deadline-heavy course from the tightest cluster.",
+      "Separate one deadline-heavy course from the tightest cluster first.",
     );
   } else if (metrics.maxStudyOverageDays > 0 || metrics.heavyDayCount >= 2) {
     recommendations.push(
-      `Start by lightening ${metrics.busiestDay} or moving one demanding course off that day.`,
+      `Lighten ${metrics.busiestDay} first, or move one demanding course off that day.`,
     );
   } else if (metrics.longGapCount >= 2 || metrics.backToBackCount >= 3) {
-    recommendations.push(
-      "Start by adjusting one section to create cleaner gaps and transitions.",
-    );
+    if (metrics.longGapCount >= 2) {
+      recommendations.push(
+        `Cluster ${metrics.busiestDay} more tightly to cut down long gaps first.`,
+      );
+    } else {
+      recommendations.push(
+        "Add one buffer between the tightest class blocks first.",
+      );
+    }
   } else if (metrics.weeklyCommitmentHours >= 12) {
     recommendations.push(
-      "Start by protecting more time around work and other commitments.",
+      "Protect more time around work and other commitments first.",
     );
   } else if (warnings.length === 0) {
     recommendations.push(
@@ -209,7 +217,7 @@ export function buildRecommendations(analysis: PlanAnalysis) {
     );
   } else {
     recommendations.push(
-      `Start by reducing ${topDriver ? DRIVER_LABELS[topDriver.key] : "overall pressure"}.`,
+      `Reduce ${topDriver ? DRIVER_LABELS[topDriver.key] : "overall pressure"} first.`,
     );
   }
 
@@ -285,8 +293,7 @@ export function summarizeBestPlan(analyses: PlanAnalysis[]) {
     planId: best.planId,
     planName: best.planName,
     title: `Recommended: ${best.planName}`,
-    description: `Lowest overall pressure at a stress score of ${best.metrics.stressScore}.`,
+    description: `Best balance of workload, conflicts, and deadline pressure at a stress score of ${best.metrics.stressScore}.`,
     reasons: reasons.slice(0, 4),
-    summary: `${best.planName} has the lowest overall pressure and the clearest week-to-week fit.`,
   };
 }

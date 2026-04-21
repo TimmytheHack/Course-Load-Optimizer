@@ -45,12 +45,25 @@ export function ComparisonTable({
 
   function getColumnClasses(planId: PlanAnalysis["planId"], area: "header" | "cell") {
     if (planId !== recommendedPlanId) {
-      return area === "header" ? "" : "";
+      return area === "header" ? "" : "bg-white";
     }
 
     return area === "header"
-      ? "bg-slate-100/95"
-      : "bg-slate-50/70";
+      ? "bg-[linear-gradient(180deg,rgba(241,245,249,0.98),rgba(248,250,252,0.98))] shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]"
+      : "bg-[linear-gradient(180deg,rgba(248,250,252,0.92),rgba(241,245,249,0.78))]";
+  }
+
+  function getMetricLabelClasses() {
+    return "sticky left-0 z-10 bg-white px-4 py-3 text-[13px] font-medium text-slate-600";
+  }
+
+  function getValueWrapClasses(planId: PlanAnalysis["planId"]) {
+    return [
+      "flex items-center justify-between gap-2",
+      planId === recommendedPlanId ? "rounded-2xl border border-slate-200/80 bg-white/50 px-3 py-2" : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
   }
 
   function renderValueBadge({
@@ -80,18 +93,23 @@ export function ComparisonTable({
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="overflow-x-auto rounded-[28px] border border-slate-200/80 bg-white shadow-[0_14px_36px_rgba(15,23,42,0.05)]">
         <table className="min-w-full border-collapse text-left text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50/90">
-              <th className="sticky left-0 bg-slate-50/95 px-5 py-4 font-semibold text-slate-700">Metric</th>
+              <th className="sticky left-0 z-20 bg-slate-50/95 px-4 py-3.5 font-semibold text-slate-700">
+                Metric
+              </th>
               {analyses.map((analysis) => (
                 <th
                   key={analysis.planId}
                   className={[
-                    "min-w-44 px-5 py-4 font-semibold text-slate-700",
+                    "min-w-44 px-4 py-3.5 font-semibold text-slate-700",
                     getColumnClasses(analysis.planId, "header"),
+                    analysis.planId === recommendedPlanId
+                      ? "border-x border-slate-200/80"
+                      : "",
                   ].join(" ")}
                 >
                   <div>
@@ -113,28 +131,34 @@ export function ComparisonTable({
           </thead>
           <tbody>
             <tr className="border-b border-slate-100">
-              <td className="sticky left-0 bg-white px-5 py-4 text-slate-500">Stress score</td>
+              <td className={getMetricLabelClasses()}>Stress score</td>
               {analyses.map((analysis) => (
                 <td
                   key={analysis.planId}
-                  className={["px-5 py-4", getColumnClasses(analysis.planId, "cell")].join(" ")}
+                  className={[
+                    "px-4 py-2.5",
+                    getColumnClasses(analysis.planId, "cell"),
+                    analysis.planId === recommendedPlanId ? "border-x border-slate-200/80" : "",
+                  ].join(" ")}
                 >
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="text-xl font-semibold text-slate-900">
-                      {analysis.metrics.stressScore}
-                    </span>
-                    <span
-                      className={[
-                        "rounded-full border px-2.5 py-1 text-xs font-semibold capitalize",
-                        analysis.metrics.stressScore >= 81
-                          ? "border-rose-200 bg-rose-50 text-rose-700"
-                          : analysis.metrics.stressScore >= 61
-                            ? "border-amber-200 bg-amber-50 text-amber-700"
-                            : "border-slate-200 bg-slate-50 text-slate-600",
-                      ].join(" ")}
-                    >
-                      {analysis.metrics.stressLabel}
-                    </span>
+                  <div className={getValueWrapClasses(analysis.planId)}>
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-xl font-semibold text-slate-900">
+                        {analysis.metrics.stressScore}
+                      </span>
+                      <span
+                        className={[
+                          "rounded-full border px-2 py-0.5 text-[11px] font-semibold capitalize",
+                          analysis.metrics.stressScore >= 81
+                            ? "border-rose-200 bg-rose-50 text-rose-700"
+                            : analysis.metrics.stressScore >= 61
+                              ? "border-amber-200 bg-amber-50 text-amber-700"
+                              : "border-slate-200 bg-slate-50 text-slate-600",
+                        ].join(" ")}
+                      >
+                        {analysis.metrics.stressLabel}
+                      </span>
+                    </div>
                     {renderValueBadge({
                       isBest: analysis.metrics.stressScore === bestStressScore,
                       isWorst: analysis.metrics.stressScore === worstStressScore,
@@ -144,13 +168,17 @@ export function ComparisonTable({
               ))}
             </tr>
             <tr className="border-b border-slate-100">
-              <td className="sticky left-0 bg-white px-5 py-4 text-slate-500">Class conflicts</td>
+              <td className={getMetricLabelClasses()}>Class conflicts</td>
               {analyses.map((analysis) => (
                 <td
                   key={analysis.planId}
-                  className={["px-5 py-4 text-slate-700", getColumnClasses(analysis.planId, "cell")].join(" ")}
+                  className={[
+                    "px-4 py-2.5 text-slate-700",
+                    getColumnClasses(analysis.planId, "cell"),
+                    analysis.planId === recommendedPlanId ? "border-x border-slate-200/80" : "",
+                  ].join(" ")}
                 >
-                  <div className="flex flex-wrap items-center gap-3">
+                  <div className={getValueWrapClasses(analysis.planId)}>
                     <span className={analysis.metrics.classConflictCount > 0 ? "font-semibold text-rose-700" : "font-semibold text-slate-900"}>
                       {analysis.metrics.classConflictCount}
                     </span>
@@ -163,13 +191,17 @@ export function ComparisonTable({
               ))}
             </tr>
             <tr className="border-b border-slate-100">
-              <td className="sticky left-0 bg-white px-5 py-4 text-slate-500">Commitment overlaps</td>
+              <td className={getMetricLabelClasses()}>Commitment overlaps</td>
               {analyses.map((analysis) => (
                 <td
                   key={analysis.planId}
-                  className={["px-5 py-4 text-slate-700", getColumnClasses(analysis.planId, "cell")].join(" ")}
+                  className={[
+                    "px-4 py-2.5 text-slate-700",
+                    getColumnClasses(analysis.planId, "cell"),
+                    analysis.planId === recommendedPlanId ? "border-x border-slate-200/80" : "",
+                  ].join(" ")}
                 >
-                  <div className="flex flex-wrap items-center gap-3">
+                  <div className={getValueWrapClasses(analysis.planId)}>
                     <span className={analysis.metrics.commitmentConflictCount > 0 ? "font-semibold text-amber-700" : "font-semibold text-slate-900"}>
                       {analysis.metrics.commitmentConflictCount}
                     </span>
@@ -182,13 +214,17 @@ export function ComparisonTable({
               ))}
             </tr>
             <tr className="border-b border-slate-100">
-              <td className="sticky left-0 bg-white px-5 py-4 text-slate-500">Weekly study hours</td>
+              <td className={getMetricLabelClasses()}>Weekly study hours</td>
               {analyses.map((analysis) => (
                 <td
                   key={analysis.planId}
-                  className={["px-5 py-4 text-slate-700", getColumnClasses(analysis.planId, "cell")].join(" ")}
+                  className={[
+                    "px-4 py-2.5 text-slate-700",
+                    getColumnClasses(analysis.planId, "cell"),
+                    analysis.planId === recommendedPlanId ? "border-x border-slate-200/80" : "",
+                  ].join(" ")}
                 >
-                  <div className="flex flex-wrap items-center gap-3">
+                  <div className={getValueWrapClasses(analysis.planId)}>
                     <span className="font-semibold text-slate-900">
                       {formatHours(analysis.metrics.weeklyStudyHours)}
                     </span>
@@ -201,13 +237,17 @@ export function ComparisonTable({
               ))}
             </tr>
             <tr className="border-b border-slate-100">
-              <td className="sticky left-0 bg-white px-5 py-4 text-slate-500">Heavy days</td>
+              <td className={getMetricLabelClasses()}>Heavy days</td>
               {analyses.map((analysis) => (
                 <td
                   key={analysis.planId}
-                  className={["px-5 py-4 text-slate-700", getColumnClasses(analysis.planId, "cell")].join(" ")}
+                  className={[
+                    "px-4 py-2.5 text-slate-700",
+                    getColumnClasses(analysis.planId, "cell"),
+                    analysis.planId === recommendedPlanId ? "border-x border-slate-200/80" : "",
+                  ].join(" ")}
                 >
-                  <div className="flex flex-wrap items-center gap-3">
+                  <div className={getValueWrapClasses(analysis.planId)}>
                     <span className={analysis.metrics.heavyDayCount >= 3 ? "font-semibold text-amber-700" : "font-semibold text-slate-900"}>
                       {analysis.metrics.heavyDayCount}
                     </span>
@@ -220,13 +260,17 @@ export function ComparisonTable({
               ))}
             </tr>
             <tr className="border-b border-slate-100">
-              <td className="sticky left-0 bg-white px-5 py-4 text-slate-500">Exam clustering risk</td>
+              <td className={getMetricLabelClasses()}>Exam clustering risk</td>
               {analyses.map((analysis) => (
                 <td
                   key={analysis.planId}
-                  className={["px-5 py-4 text-slate-700", getColumnClasses(analysis.planId, "cell")].join(" ")}
+                  className={[
+                    "px-4 py-2.5 text-slate-700",
+                    getColumnClasses(analysis.planId, "cell"),
+                    analysis.planId === recommendedPlanId ? "border-x border-slate-200/80" : "",
+                  ].join(" ")}
                 >
-                  <div className="flex flex-wrap items-center gap-3">
+                  <div className={getValueWrapClasses(analysis.planId)}>
                     <span className={analysis.metrics.examClusterPairs > 0 ? "font-semibold text-amber-700" : "font-semibold text-slate-900"}>
                       {analysis.metrics.examClusterPairs > 0
                         ? `${analysis.metrics.examClusterPairs} pair${analysis.metrics.examClusterPairs > 1 ? "s" : ""}`
@@ -241,13 +285,17 @@ export function ComparisonTable({
               ))}
             </tr>
             <tr className="border-b border-slate-100">
-              <td className="sticky left-0 bg-white px-5 py-4 text-slate-500">Busiest day</td>
+              <td className={getMetricLabelClasses()}>Busiest day</td>
               {analyses.map((analysis) => (
                 <td
                   key={analysis.planId}
-                  className={["px-5 py-4 text-slate-700", getColumnClasses(analysis.planId, "cell")].join(" ")}
+                  className={[
+                    "px-4 py-2.5 text-slate-700",
+                    getColumnClasses(analysis.planId, "cell"),
+                    analysis.planId === recommendedPlanId ? "border-x border-slate-200/80" : "",
+                  ].join(" ")}
                 >
-                  <div className="flex flex-wrap items-center gap-3">
+                  <div className={getValueWrapClasses(analysis.planId)}>
                     <span className="font-semibold text-slate-900">
                       {analysis.metrics.busiestDay} · {formatHours(analysis.metrics.busiestDayHours)}
                     </span>
@@ -260,13 +308,17 @@ export function ComparisonTable({
               ))}
             </tr>
             <tr>
-              <td className="sticky left-0 bg-white px-5 py-4 text-slate-500">Weekly class hours</td>
+              <td className={getMetricLabelClasses()}>Weekly class hours</td>
               {analyses.map((analysis) => (
                 <td
                   key={analysis.planId}
-                  className={["px-5 py-4 text-slate-700", getColumnClasses(analysis.planId, "cell")].join(" ")}
+                  className={[
+                    "px-4 py-2.5 text-slate-700",
+                    getColumnClasses(analysis.planId, "cell"),
+                    analysis.planId === recommendedPlanId ? "border-x border-slate-200/80" : "",
+                  ].join(" ")}
                 >
-                  <div className="flex flex-wrap items-center gap-3">
+                  <div className={getValueWrapClasses(analysis.planId)}>
                     <span className="font-semibold text-slate-900">
                       {formatHours(analysis.metrics.weeklyClassHours)}
                     </span>

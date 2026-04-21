@@ -14,7 +14,7 @@ export function PlanTabs({
   onChange,
 }: PlanTabsProps) {
   return (
-    <div className="grid gap-3 lg:grid-cols-3">
+    <div className="grid gap-2.5 lg:grid-cols-3">
       {analyses.map((analysis) => {
         const isActive = analysis.planId === activePlanId;
         const isRecommended = analysis.planId === recommendedPlanId;
@@ -25,7 +25,7 @@ export function PlanTabs({
             type="button"
             onClick={() => onChange(analysis.planId)}
             className={[
-              "relative min-h-[188px] rounded-[26px] border px-5 py-4 text-left transition-all duration-200 ease-out motion-reduce:transition-none",
+              "relative min-h-[170px] rounded-[24px] border px-4 py-3.5 text-left transition-all duration-200 ease-out motion-reduce:transition-none",
               isActive
                 ? "border-slate-900 bg-[linear-gradient(155deg,#0f172a,#1f2937)] text-white shadow-[0_24px_50px_rgba(15,23,42,0.18)] motion-safe:-translate-y-0.5 motion-safe:scale-[1.01]"
                 : "border-slate-200/80 bg-white text-slate-800 shadow-sm hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg",
@@ -66,25 +66,25 @@ export function PlanTabs({
               </div>
             </div>
             {analysis.planDescription ? (
-              <p className={["mt-4 text-sm leading-6", isActive ? "text-white/75" : "text-slate-600"].join(" ")}>
+              <p className={["mt-3 text-sm leading-5", isActive ? "text-white/75" : "text-slate-600"].join(" ")}>
                 {analysis.planDescription}
               </p>
             ) : null}
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              <div className={["rounded-2xl border px-3 py-3", isActive ? "border-white/10 bg-white/6" : "border-slate-200 bg-slate-50"].join(" ")}>
+            <div className="mt-4 grid grid-cols-2 gap-2.5">
+              <div className={["rounded-2xl border px-3 py-2.5", isActive ? "border-white/10 bg-white/6" : "border-slate-200 bg-slate-50"].join(" ")}>
                 <p className={["text-[11px] font-semibold uppercase tracking-[0.16em]", isActive ? "text-white/55" : "text-slate-400"].join(" ")}>
                   Stress Score
                 </p>
                 <p className="mt-2 text-2xl font-semibold">{analysis.metrics.stressScore}</p>
               </div>
-              <div className={["rounded-2xl border px-3 py-3", isActive ? "border-white/10 bg-white/6" : "border-slate-200 bg-slate-50"].join(" ")}>
+              <div className={["rounded-2xl border px-3 py-2.5", isActive ? "border-white/10 bg-white/6" : "border-slate-200 bg-slate-50"].join(" ")}>
                 <p className={["text-[11px] font-semibold uppercase tracking-[0.16em]", isActive ? "text-white/55" : "text-slate-400"].join(" ")}>
                   Warnings
                 </p>
                 <p className="mt-2 text-2xl font-semibold">{analysis.warnings.length}</p>
               </div>
             </div>
-            <div className="mt-4 flex items-end justify-between gap-3">
+            <div className="mt-3.5 flex items-end justify-between gap-3">
               <div>
                 <p className={["text-sm", isActive ? "text-white/70" : "text-slate-500"].join(" ")}>
                   {analysis.courses.length} courses

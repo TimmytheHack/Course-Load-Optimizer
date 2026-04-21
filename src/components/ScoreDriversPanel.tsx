@@ -1,6 +1,5 @@
 import {
   describeScoreDriver,
-  DRIVER_LABELS,
   getRankedScoreDrivers,
   ScoreDriverKey,
 } from "@/lib/recommendations";
@@ -31,6 +30,27 @@ const DRIVER_INPUTS: Record<ScoreDriverKey, string> = {
   conflictPressure: "class conflicts and commitment overlaps",
 };
 
+function getPressureLevel(value: number) {
+  if (value >= 75) {
+    return {
+      label: "High pressure",
+      className: "border-rose-200 bg-rose-50 text-rose-700",
+    };
+  }
+
+  if (value >= 45) {
+    return {
+      label: "Medium pressure",
+      className: "border-amber-200 bg-amber-50 text-amber-700",
+    };
+  }
+
+  return {
+    label: "Low pressure",
+    className: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  };
+}
+
 export function ScoreDriversPanel({ analysis }: ScoreDriversPanelProps) {
   const rankedDrivers = getRankedScoreDrivers(analysis).map((driver) => ({
     ...driver,
@@ -57,17 +77,18 @@ export function ScoreDriversPanel({ analysis }: ScoreDriversPanelProps) {
           Math.round(weightedBaseScore) + classConflictOverride + commitmentPenalty - 100,
         )
       : 0;
+  const topDriverLabels = rankedDrivers
+    .slice(0, 3)
+    .map((driver) => DRIVER_TITLES[driver.key])
+    .join(", ");
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5">
       <div className="rounded-[26px] border border-slate-200 bg-slate-50/80 p-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-          Why this score?
+        <p className="text-sm leading-6 text-slate-700">
+          Seven weighted categories build the base score, then overlap rules raise the result when they apply.
         </p>
-        <p className="mt-2 text-sm leading-6 text-slate-700">
-          The score starts with seven weighted categories, then adds conflict penalties when those rules apply.
-        </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="mt-3.5 grid gap-3 sm:grid-cols-2">
           <div className="rounded-[22px] border border-slate-200 bg-white px-4 py-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
               Base score
@@ -89,24 +110,40 @@ export function ScoreDriversPanel({ analysis }: ScoreDriversPanelProps) {
 
       <div className="grid gap-3">
         {rankedDrivers.map((driver) => (
-          <article
-            key={driver.key}
-            className="rounded-[26px] border border-slate-200 bg-white p-4 shadow-sm"
-          >
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-slate-900">
-                  {DRIVER_TITLES[driver.key]}
+          <article key={driver.key} className="rounded-[26px] border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-base font-semibold text-slate-950">
+                    {DRIVER_TITLES[driver.key]}
+                  </p>
+                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                    {Math.round(driver.weight * 100)}% weight
+                  </span>
+                  <span
+                    className={[
+                      "rounded-full border px-2 py-0.5 text-[11px] font-semibold",
+                      getPressureLevel(driver.value).className,
+                    ].join(" ")}
+                  >
+                    {getPressureLevel(driver.value).label}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-slate-700">
+                  {describeScoreDriver(analysis, driver.key)}
                 </p>
-                <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-400">
-                  {Math.round(driver.weight * 100)}% weight
+                <p className="mt-2 text-[11px] uppercase tracking-[0.16em] text-slate-400">
+                  Inputs: {DRIVER_INPUTS[driver.key]}
                 </p>
               </div>
-              <div className="text-right">
-                <p className="text-lg font-semibold text-slate-900">
+              <div className="rounded-[22px] border border-slate-200 bg-slate-50 px-3.5 py-3 text-right">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                  Contribution
+                </p>
+                <p className="mt-1 text-2xl font-semibold text-slate-950">
                   ~{Math.round(driver.contribution)} pts
                 </p>
-                <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-400">
+                <p className="mt-1 text-xs font-medium text-slate-500">
                   {Math.round(driver.value)} / 100 pressure
                 </p>
               </div>
@@ -117,12 +154,6 @@ export function ScoreDriversPanel({ analysis }: ScoreDriversPanelProps) {
                 style={{ width: `${Math.max(driver.value, 8)}%` }}
               />
             </div>
-            <p className="mt-3 text-xs uppercase tracking-[0.16em] text-slate-400">
-              Uses {DRIVER_INPUTS[driver.key]}
-            </p>
-            <p className="mt-3 text-sm leading-6 text-slate-700">
-              {describeScoreDriver(analysis, driver.key)}
-            </p>
           </article>
         ))}
       </div>
@@ -149,14 +180,7 @@ export function ScoreDriversPanel({ analysis }: ScoreDriversPanelProps) {
       ) : null}
 
       <div className="rounded-[26px] border border-emerald-200 bg-emerald-50/80 p-4 text-sm leading-6 text-emerald-950">
-        The biggest drivers right now are{" "}
-        <span className="font-semibold">
-          {rankedDrivers
-            .slice(0, 3)
-            .map((driver) => DRIVER_LABELS[driver.key])
-            .join(", ")}
-        </span>
-        .
+        Biggest drivers: <span className="font-semibold">{topDriverLabels}</span>.
       </div>
     </div>
   );

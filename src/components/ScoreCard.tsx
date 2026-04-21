@@ -10,7 +10,7 @@ interface ScoreCardProps {
 export function ScoreCard({ analysis, highlighted = false, recommended = false }: ScoreCardProps) {
   const { metrics } = analysis;
   const quickRead = recommended
-    ? "Lowest pressure overall."
+    ? "Best tradeoff in this comparison."
     : analysis.warnings[0]
       ? `Main issue: ${analysis.warnings[0].title.toLowerCase()}.`
       : "Open this plan to review the tradeoffs.";
