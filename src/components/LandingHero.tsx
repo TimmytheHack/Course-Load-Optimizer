@@ -4,6 +4,7 @@ interface LandingHeroProps {
   onJumpToComparison?: () => void;
   isSampleLoaded?: boolean;
   bestPlanName?: string | null;
+  bestPlanSummary?: string | null;
   demoPlans?: Array<{
     name: string;
     profileLabel?: string;
@@ -18,6 +19,7 @@ export function LandingHero({
   onJumpToComparison,
   isSampleLoaded = false,
   bestPlanName = null,
+  bestPlanSummary = null,
   demoPlans = [],
 }: LandingHeroProps) {
   return (
@@ -27,23 +29,30 @@ export function LandingHero({
       <div className="relative grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:gap-10">
         <div className="max-w-2xl">
           <p className="inline-flex rounded-full border border-slate-200/80 bg-white/85 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 shadow-sm">
-            {isSampleLoaded ? "Demo-Ready Sample Loaded" : "Frontend MVP"}
+            {isSampleLoaded ? "Submission Demo Ready" : "Frontend MVP"}
           </p>
           <h1 className="mt-6 max-w-2xl font-serif text-4xl leading-tight text-slate-950 sm:text-5xl lg:text-[3.6rem] lg:leading-[1.02]">
             Course Load Optimizer
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-700">
-            Compare semester plans, detect overload, and choose the most realistic
-            schedule before registration.
+            Compare semester plans, spot overload risk, and choose the schedule that is actually realistic.
           </p>
           <p className="mt-4 max-w-xl text-sm leading-7 text-slate-600">
             {isSampleLoaded
-              ? "The sample below is already staged for a fast demo: Plan A shows overload risk, Plan B is the realistic choice, and Plan C looks fine on a timetable but breaks at exam time."
-              : "This is a decision tool, not just a timetable viewer. Load a realistic sample semester or start from scratch, then compare Plan A, Plan B, and Plan C side by side."}
+              ? "The app opens on a preloaded semester so a reviewer can immediately see three different outcomes: overloaded, balanced, and deadline-clustered."
+              : "This is a decision tool, not just a timetable viewer. Load the sample semester or start from scratch and compare Plan A, Plan B, and Plan C side by side."}
           </p>
+          {isSampleLoaded && bestPlanSummary ? (
+            <div className="mt-6 rounded-[26px] border border-slate-200/80 bg-white/82 p-4 shadow-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                What a reviewer should see first
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-700">{bestPlanSummary}</p>
+            </div>
+          ) : null}
           <div className="mt-8 flex flex-wrap gap-3">
             <button type="button" onClick={onTrySample} className="button-primary">
-              {isSampleLoaded ? "Reload Demo Semester" : "Try Sample Semester"}
+              {isSampleLoaded ? "Reset Demo Semester" : "Try Sample Semester"}
             </button>
             <button type="button" onClick={onBuildOwn} className="button-secondary">
               Build Your Own Plan
@@ -57,21 +66,21 @@ export function LandingHero({
           <div className="mt-8 grid gap-3 sm:grid-cols-3">
             <div className="rounded-[24px] border border-slate-200/70 bg-white/75 p-4 shadow-sm">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                Core Value
+                Reviewer Hook
               </p>
-              <p className="mt-2 text-sm font-semibold text-slate-900">Compare realistic tradeoffs</p>
+              <p className="mt-2 text-sm font-semibold text-slate-900">Not just a timetable</p>
             </div>
             <div className="rounded-[24px] border border-slate-200/70 bg-white/75 p-4 shadow-sm">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                Inputs
+                Instant Signal
               </p>
-              <p className="mt-2 text-sm font-semibold text-slate-900">Courses, workload, commitments</p>
+              <p className="mt-2 text-sm font-semibold text-slate-900">Scores and tradeoffs in seconds</p>
             </div>
             <div className="rounded-[24px] border border-slate-200/70 bg-white/75 p-4 shadow-sm">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                Output
+                Demo Story
               </p>
-              <p className="mt-2 text-sm font-semibold text-slate-900">Stress score and plan recommendation</p>
+              <p className="mt-2 text-sm font-semibold text-slate-900">A, B, and C fail differently</p>
             </div>
           </div>
         </div>
@@ -80,10 +89,10 @@ export function LandingHero({
             <>
               <div className="rounded-[28px] border border-slate-200/80 bg-white/88 p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)] lg:row-span-2">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                  Demo Story
+                  15-Second Story
                 </p>
                 <p className="mt-3 text-base font-semibold text-slate-950">
-                  Show the tradeoff in under three minutes
+                  The product value should be obvious immediately
                 </p>
                 <div className="mt-4 space-y-3">
                   {demoPlans.map((plan, index) => (
@@ -107,23 +116,19 @@ export function LandingHero({
                 </div>
               </div>
               <div className="rounded-[28px] border border-slate-200/80 bg-white/88 p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                  Best Overall
-                </p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Best Overall</p>
                 <p className="mt-3 text-base font-semibold text-slate-950">
-                  {bestPlanName ? `${bestPlanName} is the easiest recommendation to defend.` : "Balanced plan should emerge clearly."}
+                  {bestPlanName ? `${bestPlanName} should win clearly.` : "Balanced plan should emerge clearly."}
                 </p>
                 <p className="mt-2 text-sm leading-6 text-slate-700">
-                  The audience should immediately see that this app compares realistic options, not just calendar layouts.
+                  The first takeaway should be that the app recommends a better option, not just displays schedules.
                 </p>
               </div>
               <div className="rounded-[28px] border border-slate-200/80 bg-white/88 p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                  Core Reveal
-                </p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Core Reveal</p>
                 <p className="mt-3 text-base font-semibold text-slate-950">Timetable fit is not enough</p>
                 <p className="mt-2 text-sm leading-6 text-slate-700">
-                  One plan overloads the week, one is sustainable, and one looks clean until exams cluster together.
+                  One plan overloads the week, one is sustainable, and one only breaks when deadlines start stacking.
                 </p>
               </div>
             </>

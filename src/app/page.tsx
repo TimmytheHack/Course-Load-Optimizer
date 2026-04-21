@@ -179,6 +179,7 @@ export default function HomePage() {
           onJumpToComparison={hasPlannerData ? handleJumpToComparison : undefined}
           isSampleLoaded={isDemoState}
           bestPlanName={bestPlan?.planName ?? null}
+          bestPlanSummary={bestPlan?.summary ?? null}
           demoPlans={isDemoState ? demoPlans : []}
         />
 
@@ -190,11 +191,11 @@ export default function HomePage() {
                 Demo Comparison
               </p>
               <h2 className="mt-2 text-3xl font-serif text-slate-950">
-                Three plans, three very different semester outcomes
+                The value should land before the user starts editing anything
               </h2>
             </div>
             <p className="max-w-xl text-sm leading-6 text-slate-600">
-              The fastest demo path is simple: show Plan A as the risky option, point to Plan B as the realistic choice, then use Plan C to prove that deadline timing matters just as much as calendar fit.
+              The sample opens preloaded so a reviewer can compare three outcomes immediately: obvious overload, realistic balance, and hidden exam pressure.
             </p>
           </div>
           <div className="grid gap-4 lg:grid-cols-3">
@@ -204,7 +205,7 @@ export default function HomePage() {
               </p>
               <p className="mt-2 text-base font-semibold text-slate-950">Plan A shows obvious overload risk</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                The active plan opens on the hardest path so the problem is visible immediately.
+                The default view starts on the worst plan so the app’s diagnosis is visible instantly.
               </p>
             </div>
             <div className="rounded-[28px] border border-slate-200/80 bg-white/90 p-5 shadow-sm">
@@ -213,7 +214,7 @@ export default function HomePage() {
               </p>
               <p className="mt-2 text-base font-semibold text-slate-950">Plan B is the easy recommendation</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                It should win on conflicts, overall pressure, and recommendation clarity.
+                It should clearly win on conflicts, overall pressure, and recommendation clarity.
               </p>
             </div>
             <div className="rounded-[28px] border border-slate-200/80 bg-white/90 p-5 shadow-sm">
@@ -222,8 +223,24 @@ export default function HomePage() {
               </p>
               <p className="mt-2 text-base font-semibold text-slate-950">Plan C proves the app goes beyond a timetable</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                The week looks manageable until the exam cluster risk shows up in the score and guidance.
+                The week looks fine until the deadline cluster pushes stress upward and changes the recommendation.
               </p>
+            </div>
+          </div>
+          <div className="rounded-[30px] border border-slate-200/80 bg-[linear-gradient(140deg,rgba(255,255,255,0.98),rgba(248,250,252,0.86))] p-5 shadow-sm">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+              Submission Summary
+            </p>
+            <div className="mt-3 grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
+              <p className="text-base leading-7 text-slate-700">
+                Course Load Optimizer helps students choose between realistic semester options by combining schedule conflicts, weekly workload, outside commitments, and exam timing into one comparison workflow.
+              </p>
+              <div className="rounded-[24px] border border-slate-200 bg-white p-4">
+                <p className="text-sm font-semibold text-slate-950">Why this stands out</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  The app does not stop at “can these classes fit on a calendar?” It answers “which plan is actually sustainable?”
+                </p>
+              </div>
             </div>
           </div>
           <StressLegend />
@@ -238,7 +255,7 @@ export default function HomePage() {
           </div>
           <SectionCard
             title="Side-by-Side Comparison"
-            description="Use this table early in the demo to make the product value obvious before you drill into a single plan."
+            description="This is the fastest proof point in the submission: three plans, one clear recommendation, and visible tradeoffs."
           >
             <ComparisonTable analyses={analyses} bestPlanSummary={bestPlan?.summary ?? null} />
           </SectionCard>

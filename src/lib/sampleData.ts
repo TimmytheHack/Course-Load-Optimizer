@@ -11,7 +11,7 @@ const sampleCourses: Course[] = [
     difficulty: "medium",
     requirement: "required",
     color: "bg-emerald-300/80 border-emerald-500/60 text-emerald-950",
-    deadlines: [{ id: "cs110-project", title: "Portfolio check-in", date: "2026-05-02" }],
+    deadlines: [{ id: "cs110-project", title: "Portfolio check-in", date: "2026-05-01" }],
   },
   {
     id: "course-wr150",
@@ -23,7 +23,7 @@ const sampleCourses: Course[] = [
     difficulty: "medium",
     requirement: "required",
     color: "bg-sky-300/80 border-sky-500/60 text-sky-950",
-    deadlines: [{ id: "wr150-essay", title: "Final essay", date: "2026-05-12" }],
+    deadlines: [{ id: "wr150-essay", title: "Final essay", date: "2026-05-13" }],
   },
   {
     id: "course-ec101",
@@ -35,7 +35,7 @@ const sampleCourses: Course[] = [
     difficulty: "medium",
     requirement: "elective",
     color: "bg-amber-200/90 border-amber-500/60 text-amber-950",
-    deadlines: [{ id: "ec101-exam", title: "Unit exam", date: "2026-05-18" }],
+    deadlines: [{ id: "ec101-exam", title: "Unit exam", date: "2026-05-20" }],
   },
   {
     id: "course-ph100",
@@ -47,7 +47,7 @@ const sampleCourses: Course[] = [
     difficulty: "easy",
     requirement: "elective",
     color: "bg-rose-200/90 border-rose-500/60 text-rose-950",
-    deadlines: [{ id: "ph100-paper", title: "Reflection paper", date: "2026-05-23" }],
+    deadlines: [{ id: "ph100-paper", title: "Reflection paper", date: "2026-05-24" }],
   },
   {
     id: "course-cs210",
@@ -71,7 +71,7 @@ const sampleCourses: Course[] = [
     difficulty: "hard",
     requirement: "required",
     color: "bg-lime-200/90 border-lime-500/60 text-lime-950",
-    deadlines: [{ id: "ma225-final", title: "Final exam", date: "2026-05-07" }],
+    deadlines: [{ id: "ma225-final", title: "Final exam", date: "2026-05-05" }],
   },
   {
     id: "course-bi140",
@@ -83,7 +83,7 @@ const sampleCourses: Course[] = [
     difficulty: "hard",
     requirement: "required",
     color: "bg-cyan-200/90 border-cyan-500/60 text-cyan-950",
-    deadlines: [{ id: "bi140-practical", title: "Lab practical", date: "2026-05-14" }],
+    deadlines: [{ id: "bi140-practical", title: "Lab practical", date: "2026-05-06" }],
   },
   {
     id: "course-ds201",
@@ -107,7 +107,7 @@ const sampleCourses: Course[] = [
     difficulty: "hard",
     requirement: "required",
     color: "bg-orange-200/90 border-orange-500/60 text-orange-950",
-    deadlines: [{ id: "ch230-quiz", title: "Reaction mechanisms quiz", date: "2026-05-15" }],
+    deadlines: [{ id: "ch230-quiz", title: "Reaction mechanisms quiz", date: "2026-05-06" }],
   },
   {
     id: "course-ps230",
@@ -189,7 +189,7 @@ const samplePlans: Plan[] = [
     id: "planA",
     name: "Plan A",
     profileLabel: "Overloaded",
-    description: "Six demanding courses, one direct class conflict, and an evening commitment collision make this the highest-risk path.",
+    description: "Heavy core load, a direct class conflict, and stacked midweek pressure make this the obvious overload case.",
     courseIds: [
       "course-cs210",
       "course-ma225",
@@ -203,14 +203,14 @@ const samplePlans: Plan[] = [
     id: "planB",
     name: "Plan B",
     profileLabel: "Balanced",
-    description: "Four courses with lighter weekly study demand, no hard conflicts, and deadlines spaced across the month.",
+    description: "Manageable weekly workload, no hard conflicts, and well-spaced deadlines make this the most realistic option.",
     courseIds: ["course-cs110", "course-wr150", "course-ec101", "course-ph100"],
   },
   {
     id: "planC",
     name: "Plan C",
     profileLabel: "Deadline-heavy",
-    description: "The timetable is manageable, but four major assessments land inside the same four-day stretch.",
+    description: "The class schedule is workable, but major deadlines pile up across four consecutive days.",
     courseIds: ["course-ds201", "course-ps230", "course-ar110", "course-com240"],
   },
 ];
