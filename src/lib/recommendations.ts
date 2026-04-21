@@ -1,26 +1,28 @@
 import { PlanAnalysis, WarningItem } from "@/lib/types";
-import { formatHours } from "@/lib/utils";
+import { formatHours, formatTimeLabel } from "@/lib/utils";
 
-const DRIVER_LABELS = {
-  courseIntensity: "course intensity",
-  workloadIntensity: "workload intensity",
-  dailyBalance: "day-to-day balance",
-  scheduleFriction: "schedule friction",
-  commitmentPressure: "commitment pressure",
-  examPressure: "exam pressure",
-  conflictPressure: "conflict risk",
+export const DRIVER_LABELS = {
+  courseIntensity: "course load",
+  workloadIntensity: "weekly workload",
+  dailyBalance: "day balance",
+  scheduleFriction: "schedule shape",
+  commitmentPressure: "outside commitments",
+  examPressure: "deadline timing",
+  conflictPressure: "conflicts",
 } as const;
 
-function getTopDrivers(analysis: PlanAnalysis) {
+export type ScoreDriverKey = keyof PlanAnalysis["scoreBreakdown"];
+
+export function getRankedScoreDrivers(analysis: PlanAnalysis) {
   return Object.entries(analysis.scoreBreakdown)
     .map(([key, value]) => ({
-      key: key as keyof PlanAnalysis["scoreBreakdown"],
+      key: key as ScoreDriverKey,
       value,
     }))
     .sort((left, right) => right.value - left.value);
 }
 
-function describeDriver(analysis: PlanAnalysis, key: keyof PlanAnalysis["scoreBreakdown"]) {
+export function describeScoreDriver(analysis: PlanAnalysis, key: ScoreDriverKey) {
   const { metrics } = analysis;
 
   switch (key) {
@@ -43,7 +45,11 @@ function describeDriver(analysis: PlanAnalysis, key: keyof PlanAnalysis["scoreBr
         return `${metrics.longGapCount} long gap${metrics.longGapCount > 1 ? "s" : ""} across the week`;
       }
 
-      return `${metrics.backToBackCount} back-to-back transition${metrics.backToBackCount > 1 ? "s" : ""}`;
+      if (metrics.backToBackCount > 0) {
+        return `${metrics.backToBackCount} back-to-back transition${metrics.backToBackCount > 1 ? "s" : ""}`;
+      }
+
+      return "very little wasted time between classes";
     case "commitmentPressure":
       if (metrics.commitmentConflictCount > 0) {
         return `${metrics.commitmentConflictCount} commitment overlap${metrics.commitmentConflictCount > 1 ? "s" : ""} on top of ${formatHours(metrics.weeklyCommitmentHours)} outside class`;
@@ -68,15 +74,22 @@ function describeDriver(analysis: PlanAnalysis, key: keyof PlanAnalysis["scoreBr
 }
 
 export function buildWarnings(analysis: PlanAnalysis): WarningItem[] {
-  const { metrics } = analysis;
+  const { metrics, classConflicts, commitmentConflicts } = analysis;
   const warnings: WarningItem[] = [];
+  const firstClassConflict = classConflicts[0];
+  const firstCommitmentConflict = commitmentConflicts[0];
 
   if (metrics.classConflictCount > 0) {
     warnings.push({
       id: "class-conflicts",
       severity: "high",
       title: "Class conflict",
-      detail: `${metrics.classConflictCount} overlapping class block${metrics.classConflictCount > 1 ? "s" : ""} make this plan impossible without changes.`,
+      detail: firstClassConflict
+        ? `${metrics.classConflictCount} overlapping class block${metrics.classConflictCount > 1 ? "s" : ""} make this plan impossible without changes. The first conflict is on ${firstClassConflict.day} between ${firstClassConflict.firstTitle} and ${firstClassConflict.secondTitle}.`
+        : `${metrics.classConflictCount} overlapping class block${metrics.classConflictCount > 1 ? "s" : ""} make this plan impossible without changes.`,
+      action: firstClassConflict
+        ? `Change or remove one of the ${firstClassConflict.day} classes around ${formatTimeLabel(firstClassConflict.startTime)} to ${formatTimeLabel(firstClassConflict.endTime)} first.`
+        : "Move or remove one of the overlapping classes first.",
     });
   }
 
@@ -85,7 +98,12 @@ export function buildWarnings(analysis: PlanAnalysis): WarningItem[] {
       id: "commitment-conflicts",
       severity: "high",
       title: "Commitment overlap",
-      detail: `${metrics.commitmentConflictCount} class block${metrics.commitmentConflictCount > 1 ? "s" : ""} collide with work or personal commitments.`,
+      detail: firstCommitmentConflict
+        ? `${metrics.commitmentConflictCount} class block${metrics.commitmentConflictCount > 1 ? "s" : ""} collide with outside commitments. The first overlap is on ${firstCommitmentConflict.day} between ${firstCommitmentConflict.firstTitle} and ${firstCommitmentConflict.secondTitle}.`
+        : `${metrics.commitmentConflictCount} class block${metrics.commitmentConflictCount > 1 ? "s" : ""} collide with outside commitments.`,
+      action: firstCommitmentConflict
+        ? `Adjust the ${firstCommitmentConflict.secondTitle} block or swap that class section first.`
+        : "Adjust the overlapping commitment time or swap the conflicting class first.",
     });
   }
 
@@ -94,7 +112,8 @@ export function buildWarnings(analysis: PlanAnalysis): WarningItem[] {
       id: "back-to-back",
       severity: "medium",
       title: "Compressed transitions",
-      detail: `${metrics.backToBackCount} back-to-back transitions leave very little recovery time between classes.`,
+      detail: `${metrics.backToBackCount} back-to-back transitions leave very little time to move, eat, or reset between classes.`,
+      action: "Start by moving one tightly packed section to open up a buffer in the busiest part of the week.",
     });
   }
 
@@ -103,7 +122,8 @@ export function buildWarnings(analysis: PlanAnalysis): WarningItem[] {
       id: "long-gaps",
       severity: "medium",
       title: "Inefficient gaps",
-      detail: `${metrics.longGapCount} long gaps create dead time between classes during the week.`,
+      detail: `${metrics.longGapCount} long gaps create dead time between classes and make the week harder to use efficiently.`,
+      action: "Try clustering classes on the same days or shifting one section to shorten the longest gap first.",
     });
   }
 
@@ -112,7 +132,8 @@ export function buildWarnings(analysis: PlanAnalysis): WarningItem[] {
       id: "exam-clusters",
       severity: "high",
       title: "Assessment clustering",
-      detail: `${metrics.examClusterPairs} assessment pair${metrics.examClusterPairs > 1 ? "s" : ""} land inside the same 72-hour window.`,
+      detail: `${metrics.examClusterPairs} assessment pair${metrics.examClusterPairs > 1 ? "s" : ""} land inside the same 72-hour window, which can turn one week into a crunch point.`,
+      action: "If you can, swap out one deadline-heavy course before changing lighter parts of the plan.",
     });
   }
 
@@ -121,7 +142,8 @@ export function buildWarnings(analysis: PlanAnalysis): WarningItem[] {
       id: "heavy-days",
       severity: metrics.heavyDayCount >= 4 ? "high" : "medium",
       title: "Heavy day concentration",
-      detail: `${metrics.heavyDayCount} day${metrics.heavyDayCount > 1 ? "s" : ""} cross the heavy-day threshold.`,
+      detail: `${metrics.heavyDayCount} day${metrics.heavyDayCount > 1 ? "s" : ""} cross the heavy-day threshold, so the pressure is stacking onto too few days.`,
+      action: `Start with ${metrics.busiestDay} and move one demanding class or study-heavy course off that day.`,
     });
   }
 
@@ -130,7 +152,8 @@ export function buildWarnings(analysis: PlanAnalysis): WarningItem[] {
       id: "sleep-pressure",
       severity: "medium",
       title: "Sleep window pressure",
-      detail: `${metrics.sleepConflictCount} scheduled block${metrics.sleepConflictCount > 1 ? "s" : ""} push into the preferred sleep window.`,
+      detail: `${metrics.sleepConflictCount} scheduled block${metrics.sleepConflictCount > 1 ? "s" : ""} cut into the sleep window you set in preferences.`,
+      action: "Adjust the latest or earliest recurring block first, or loosen the preference if that limit is unrealistic for this semester.",
     });
   }
 
@@ -140,63 +163,57 @@ export function buildWarnings(analysis: PlanAnalysis): WarningItem[] {
 export function buildRecommendations(analysis: PlanAnalysis) {
   const { metrics, warnings } = analysis;
   const recommendations: string[] = [];
-  const topDrivers = getTopDrivers(analysis);
+  const topDrivers = getRankedScoreDrivers(analysis);
   const topDriver = topDrivers[0];
-  const secondDriver = topDrivers[1];
-  const primaryDriverText = topDriver ? describeDriver(analysis, topDriver.key) : null;
-  const secondaryDriverText = secondDriver ? describeDriver(analysis, secondDriver.key) : null;
+  const primaryDriverText = topDriver ? describeScoreDriver(analysis, topDriver.key) : null;
 
   if (metrics.stressScore >= 81) {
-    recommendations.push(
-      `This plan reads as overload risk. The score is being driven most by ${primaryDriverText ?? "overall workload"}${secondaryDriverText ? `, followed by ${secondaryDriverText}` : ""}.`,
-    );
+    recommendations.push("This plan is overloaded overall.");
   } else if (metrics.stressScore >= 61) {
-    recommendations.push(
-      `This plan is intense but potentially workable. The main strain comes from ${primaryDriverText ?? "the current workload mix"}${secondaryDriverText ? ` and ${secondaryDriverText}` : ""}.`,
-    );
+    recommendations.push("This plan could work, but it is heavy overall.");
   } else if (metrics.stressScore >= 31) {
-    recommendations.push(
-      `This plan looks balanced overall. No single stress driver dominates, and the biggest pressure point is still only ${primaryDriverText ?? "moderate"}.`,
-    );
+    recommendations.push("This plan looks sustainable overall.");
   } else {
-    recommendations.push(
-      `This is the lightest option. Course intensity, weekly study load, and deadline timing all stay relatively controlled.`,
-    );
+    recommendations.push("This is the lightest option overall.");
   }
+
+  recommendations.push(`The biggest driver is ${primaryDriverText ?? "overall workload"}.`);
 
   if (metrics.classConflictCount > 0) {
     recommendations.push(
-      `This plan is not realistically runnable until the direct class conflict is removed. That issue alone forces the score near overload territory.`,
+      "Start by moving or dropping one of the overlapping class sections.",
+    );
+  } else if (metrics.commitmentConflictCount > 0) {
+    recommendations.push(
+      "Start by adjusting the overlapping commitment block or swapping that class section.",
     );
   } else if (metrics.examClusterPairs > 0) {
     recommendations.push(
-      `Assessment timing is the clearest risk. ${metrics.examClusterPairs} clustered deadline pair${metrics.examClusterPairs > 1 ? "s" : ""} means one bad week could define the whole plan.`,
+      "Start by separating one deadline-heavy course from the tightest cluster.",
     );
   } else if (metrics.maxStudyOverageDays > 0 || metrics.heavyDayCount >= 2) {
     recommendations.push(
-      `The week gets top-heavy on ${metrics.heavyDayCount} day${metrics.heavyDayCount > 1 ? "s" : ""}, and the busiest day reaches ${formatHours(metrics.busiestDayHours)}. Spreading one demanding course or section would make the plan easier to sustain.`,
+      `Start by lightening ${metrics.busiestDay} or moving one demanding course off that day.`,
     );
   } else if (metrics.longGapCount >= 2 || metrics.backToBackCount >= 3) {
     recommendations.push(
-      `The schedule shape is costing you efficiency. ${describeDriver(analysis, "scheduleFriction")} makes it harder to protect meals, transitions, and focused study blocks.`,
+      "Start by adjusting one section to create cleaner gaps and transitions.",
     );
-  } else if (metrics.commitmentConflictCount > 0 || metrics.weeklyCommitmentHours >= 12) {
+  } else if (metrics.weeklyCommitmentHours >= 12) {
     recommendations.push(
-      `Outside commitments materially affect this plan. Keep the course list, but adjust work or club timing first so the academic load has enough room to breathe.`,
+      "Start by protecting more time around work and other commitments.",
+    );
+  } else if (warnings.length === 0) {
+    recommendations.push(
+      `Keep this version and protect ${metrics.busiestDay} as your anchor day.`,
+    );
+  } else {
+    recommendations.push(
+      `Start by reducing ${topDriver ? DRIVER_LABELS[topDriver.key] : "overall pressure"}.`,
     );
   }
 
-  if (warnings.length === 0) {
-    recommendations.push(
-      `No major warning flags were detected. If you keep this plan, protect ${metrics.busiestDay} as your anchor day and avoid adding another hard course on top of it.`,
-    );
-  } else if (topDriver && topDriver.value >= 55) {
-    recommendations.push(
-      `If you want to improve this plan without rebuilding it, start with ${DRIVER_LABELS[topDriver.key]}. That is the single biggest contributor to the current score.`,
-    );
-  }
-
-  return recommendations.slice(0, 4);
+  return recommendations.slice(0, 3);
 }
 
 export function summarizeBestPlan(analyses: PlanAnalysis[]) {
@@ -217,23 +234,59 @@ export function summarizeBestPlan(analyses: PlanAnalysis[]) {
     return null;
   }
 
+  const minHeavyDays = Math.min(...analyses.map((analysis) => analysis.metrics.heavyDayCount));
+  const minExamClusters = Math.min(...analyses.map((analysis) => analysis.metrics.examClusterPairs));
+  const minCommitmentConflicts = Math.min(
+    ...analyses.map((analysis) => analysis.metrics.commitmentConflictCount),
+  );
   const reasons: string[] = [];
 
-  if (best.metrics.classConflictCount === 0 && best.metrics.commitmentConflictCount === 0) {
-    reasons.push("it avoids direct scheduling conflicts");
+  if (best.metrics.classConflictCount === 0) {
+    reasons.push("No class conflicts");
   }
 
-  if (best.metrics.stressScore <= 60) {
-    reasons.push("its workload stays in a sustainable range");
+  reasons.push(`Manageable study load at ${formatHours(best.metrics.weeklyStudyHours)} / week`);
+
+  if (best.metrics.heavyDayCount === 0) {
+    reasons.push("No heavy days across the week");
+  } else if (best.metrics.heavyDayCount === minHeavyDays) {
+    reasons.push(
+      `${best.metrics.heavyDayCount} heavy day${
+        best.metrics.heavyDayCount > 1 ? "s" : ""
+      }, fewer than the other options`,
+    );
   }
 
   if (best.metrics.examClusterPairs === 0) {
-    reasons.push("deadlines are better distributed");
+    reasons.push("Low exam clustering with no stacked deadlines");
+  } else if (best.metrics.examClusterPairs === minExamClusters) {
+    reasons.push(
+      `${best.metrics.examClusterPairs} clustered deadline pair${
+        best.metrics.examClusterPairs > 1 ? "s" : ""
+      }, lower than the other options`,
+    );
+  }
+
+  if (best.metrics.commitmentConflictCount === 0) {
+    reasons.push("Better fit with outside commitments");
+  } else if (best.metrics.commitmentConflictCount === minCommitmentConflicts) {
+    reasons.push(
+      `${best.metrics.commitmentConflictCount} overlap${
+        best.metrics.commitmentConflictCount > 1 ? "s" : ""
+      } with outside commitments, better than the other options`,
+    );
+  }
+
+  if (reasons.length < 3) {
+    reasons.push(`Lowest stress score of the three at ${best.metrics.stressScore}`);
   }
 
   return {
     planId: best.planId,
     planName: best.planName,
-    summary: `${best.planName} is the best overall fit because ${reasons.slice(0, 2).join(" and ") || "it has the lowest overall pressure"}.`,
+    title: `Recommended: ${best.planName}`,
+    description: `Lowest overall pressure at a stress score of ${best.metrics.stressScore}.`,
+    reasons: reasons.slice(0, 4),
+    summary: `${best.planName} has the lowest overall pressure and the clearest week-to-week fit.`,
   };
 }

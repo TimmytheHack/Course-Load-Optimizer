@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { CommitmentForm } from "@/components/CommitmentForm";
 import { CommitmentList } from "@/components/CommitmentList";
@@ -8,11 +8,14 @@ import { ComparisonTable } from "@/components/ComparisonTable";
 import { CourseForm } from "@/components/CourseForm";
 import { CourseLibrary } from "@/components/CourseLibrary";
 import { LandingHero } from "@/components/LandingHero";
+import { PlanContentTransition } from "@/components/PlanContentTransition";
 import { PlanTabs } from "@/components/PlanTabs";
 import { PreferencesCard } from "@/components/PreferencesCard";
 import { RecommendationPanel } from "@/components/RecommendationPanel";
+import { ScoreDriversPanel } from "@/components/ScoreDriversPanel";
 import { ScoreCard } from "@/components/ScoreCard";
 import { SectionCard } from "@/components/SectionCard";
+import { StickyPlanSummary } from "@/components/StickyPlanSummary";
 import { StressLegend } from "@/components/StressLegend";
 import { Timetable } from "@/components/Timetable";
 import { WarningList } from "@/components/WarningList";
@@ -23,48 +26,11 @@ import { analyzePlanSchedule } from "@/lib/schedule";
 import { scorePlan } from "@/lib/scoring";
 import { formatHours } from "@/lib/utils";
 
-const SNAPSHOT_TILES = [
-  {
-    label: "Class conflicts",
-    key: "classConflictCount",
-  },
-  {
-    label: "Commitment overlaps",
-    key: "commitmentConflictCount",
-  },
-  {
-    label: "Back-to-back classes",
-    key: "backToBackCount",
-  },
-  {
-    label: "Long gaps",
-    key: "longGapCount",
-  },
-  {
-    label: "Weekly class hours",
-    key: "weeklyClassHours",
-  },
-  {
-    label: "Weekly study hours",
-    key: "weeklyStudyHours",
-  },
-  {
-    label: "Busiest day",
-    key: "busiestDay",
-  },
-  {
-    label: "Heavy days",
-    key: "heavyDayCount",
-  },
-  {
-    label: "Exam clustering",
-    key: "examClusterPairs",
-  },
-];
-
 export default function HomePage() {
   const workspaceRef = useRef<HTMLElement | null>(null);
   const comparisonRef = useRef<HTMLElement | null>(null);
+  const copyResetTimeoutRef = useRef<number | null>(null);
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
   const {
     state,
     isHydrated,
@@ -124,6 +90,8 @@ export default function HomePage() {
   const activeAnalysis =
     analyses.find((analysis) => analysis.planId === state.activePlanId) ?? analyses[0];
   const bestPlan = summarizeBestPlan(analyses);
+  const recommendedAnalysis =
+    analyses.find((analysis) => analysis.planId === bestPlan?.planId) ?? analyses[0];
   const hasPlannerData = state.courses.length > 0 || state.commitments.length > 0;
   const isDemoState = useMemo(
     () => state.plans.some((plan) => Boolean(plan.profileLabel)),
@@ -135,6 +103,54 @@ export default function HomePage() {
     stressScore: analysis.metrics.stressScore,
     stressLabel: analysis.metrics.stressLabel,
   }));
+  const recommendationTitle =
+    bestPlan?.title ?? `Recommended: ${recommendedAnalysis?.planName ?? "Plan B"}`;
+  const recommendationDescription =
+    bestPlan?.description ?? "Lowest overall pressure with the clearest week-to-week fit.";
+  const recommendationReasons =
+    bestPlan?.reasons ?? [`Lowest stress score of the three at ${recommendedAnalysis.metrics.stressScore}`];
+  const examClusteringSummary =
+    recommendedAnalysis.metrics.examClusterPairs > 0
+      ? `${recommendedAnalysis.metrics.examClusterPairs} clustered deadline pair${
+          recommendedAnalysis.metrics.examClusterPairs > 1 ? "s" : ""
+        }`
+      : "Low";
+  const activePlanSignals = [
+    {
+      label: "Weekly class hours",
+      value: formatHours(activeAnalysis.metrics.weeklyClassHours),
+    },
+    {
+      label: "Weekly study hours",
+      value: formatHours(activeAnalysis.metrics.weeklyStudyHours),
+    },
+    {
+      label: "Total conflicts",
+      value: String(
+        activeAnalysis.metrics.classConflictCount +
+          activeAnalysis.metrics.commitmentConflictCount,
+      ),
+    },
+    {
+      label: "Busiest day",
+      value: `${activeAnalysis.metrics.busiestDay} · ${formatHours(
+        activeAnalysis.metrics.busiestDayHours,
+      )}`,
+    },
+    {
+      label: "Heavy days",
+      value: String(activeAnalysis.metrics.heavyDayCount),
+    },
+    {
+      label: "Exam clustering",
+      value:
+        activeAnalysis.metrics.examClusterPairs > 0
+          ? `${activeAnalysis.metrics.examClusterPairs} pair${
+              activeAnalysis.metrics.examClusterPairs > 1 ? "s" : ""
+            }`
+          : "Clear",
+    },
+  ];
 
   function scrollToTarget(target: HTMLElement | null) {
     requestAnimationFrame(() => {
@@ -156,6 +172,67 @@ export default function HomePage() {
     scrollToTarget(comparisonRef.current);
   }
 
+  function queueCopyStatus(status: "copied" | "error") {
+    setCopyStatus(status);
+
+    if (copyResetTimeoutRef.current !== null) {
+      window.clearTimeout(copyResetTimeoutRef.current);
+    }
+
+    copyResetTimeoutRef.current = window.setTimeout(() => {
+      setCopyStatus("idle");
+      copyResetTimeoutRef.current = null;
+    }, 2200);
+  }
+
+  function buildRecommendationExportText() {
+    const keyRecommendation =
+      recommendedAnalysis.recommendations[0] ??
+      "Review the full plan details before you lock in this schedule.";
+
+    return [
+      "Course Load Optimizer",
+      recommendationTitle,
+      recommendationDescription,
+      "",
+      `Selected plan: ${recommendedAnalysis.planName}`,
+      `Stress score: ${recommendedAnalysis.metrics.stressScore} (${recommendedAnalysis.metrics.stressLabel})`,
+      `Weekly study hours: ${formatHours(recommendedAnalysis.metrics.weeklyStudyHours)} / week`,
+      `Class conflicts: ${recommendedAnalysis.metrics.classConflictCount}`,
+      `Commitment overlaps: ${recommendedAnalysis.metrics.commitmentConflictCount}`,
+      `Exam clustering: ${examClusteringSummary}`,
+      "",
+      "Top reasons:",
+      ...recommendationReasons.map((reason) => `- ${reason}`),
+      "",
+      `Key recommendation: ${keyRecommendation}`,
+    ].join("\n");
+  }
+
+  async function handleCopyRecommendationSummary() {
+    const summaryText = buildRecommendationExportText();
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(summaryText);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = summaryText;
+        textArea.setAttribute("readonly", "true");
+        textArea.style.position = "absolute";
+        textArea.style.left = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+      }
+
+      queueCopyStatus("copied");
+    } catch {
+      queueCopyStatus("error");
+    }
+  }
+
   if (!isHydrated) {
     return (
       <main className="min-h-screen px-4 py-10 sm:px-6 lg:px-8">
@@ -172,7 +249,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-8">
+      <div className="mx-auto max-w-7xl space-y-6">
         <LandingHero
           onTrySample={handleSampleLoad}
           onBuildOwn={handleBuildOwn}
@@ -184,200 +261,203 @@ export default function HomePage() {
         />
 
         {hasPlannerData ? (
-        <section ref={comparisonRef} className="space-y-6">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
-                Demo Comparison
-              </p>
-              <h2 className="mt-2 text-3xl font-serif text-slate-950">
-                The value should land before the user starts editing anything
-              </h2>
-            </div>
-            <p className="max-w-xl text-sm leading-6 text-slate-600">
-              The sample opens preloaded so a reviewer can compare three outcomes immediately: obvious overload, realistic balance, and hidden exam pressure.
-            </p>
-          </div>
-          <div className="grid gap-4 lg:grid-cols-3">
-            <div className="rounded-[28px] border border-slate-200/80 bg-white/90 p-5 shadow-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                1. Start Here
-              </p>
-              <p className="mt-2 text-base font-semibold text-slate-950">Plan A shows obvious overload risk</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                The default view starts on the worst plan so the app’s diagnosis is visible instantly.
-              </p>
-            </div>
-            <div className="rounded-[28px] border border-slate-200/80 bg-white/90 p-5 shadow-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                2. Contrast
-              </p>
-              <p className="mt-2 text-base font-semibold text-slate-950">Plan B is the easy recommendation</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                It should clearly win on conflicts, overall pressure, and recommendation clarity.
-              </p>
-            </div>
-            <div className="rounded-[28px] border border-slate-200/80 bg-white/90 p-5 shadow-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                3. Reveal
-              </p>
-              <p className="mt-2 text-base font-semibold text-slate-950">Plan C proves the app goes beyond a timetable</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                The week looks fine until the deadline cluster pushes stress upward and changes the recommendation.
-              </p>
-            </div>
-          </div>
-          <div className="rounded-[30px] border border-slate-200/80 bg-[linear-gradient(140deg,rgba(255,255,255,0.98),rgba(248,250,252,0.86))] p-5 shadow-sm">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-              Submission Summary
-            </p>
-            <div className="mt-3 grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
-              <p className="text-base leading-7 text-slate-700">
-                Course Load Optimizer helps students choose between realistic semester options by combining schedule conflicts, weekly workload, outside commitments, and exam timing into one comparison workflow.
-              </p>
-              <div className="rounded-[24px] border border-slate-200 bg-white p-4">
-                <p className="text-sm font-semibold text-slate-950">Why this stands out</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  The app does not stop at “can these classes fit on a calendar?” It answers “which plan is actually sustainable?”
+          <StickyPlanSummary
+            analyses={analyses}
+            activePlanId={state.activePlanId}
+            recommendedPlanId={bestPlan?.planId ?? null}
+            recommendedTitle={bestPlan?.title ?? null}
+            recommendedDescription={bestPlan?.description ?? null}
+            onChange={setActivePlan}
+          />
+        ) : null}
+
+        {hasPlannerData ? (
+        <section ref={comparisonRef} className="space-y-5">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+            <div className="rounded-[30px] border border-slate-900 bg-[linear-gradient(150deg,#0f172a,#1f2937)] p-5 text-white shadow-[0_24px_50px_rgba(15,23,42,0.16)]">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/60">
+                  Recommended plan
                 </p>
+                <button
+                  type="button"
+                  onClick={handleCopyRecommendationSummary}
+                  className="inline-flex items-center rounded-full border border-white/12 bg-white/5 px-3 py-1.5 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/35 focus:ring-offset-0 motion-reduce:transition-none"
+                >
+                  {copyStatus === "copied"
+                    ? "Copied summary"
+                    : copyStatus === "error"
+                      ? "Copy failed"
+                      : "Copy summary"}
+                </button>
               </div>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <h3 className="text-2xl font-semibold text-white">
+                  {recommendationTitle}
+                </h3>
+                <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-sm font-semibold text-white">
+                  Stress score {recommendedAnalysis?.metrics.stressScore ?? 0}
+                </span>
+              </div>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-white/85">
+                {recommendationDescription}
+              </p>
+              <ul className="mt-5 grid gap-3 sm:grid-cols-2">
+                {recommendationReasons.map((reason) => (
+                  <li
+                    key={reason}
+                    className="rounded-[22px] border border-white/10 bg-white/6 px-4 py-3 text-sm font-medium text-white/92"
+                  >
+                    {reason}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-4 text-xs text-white/60" aria-live="polite">
+                {copyStatus === "copied"
+                  ? "Recommendation copied to your clipboard."
+                  : copyStatus === "error"
+                    ? "Clipboard access failed. Try again in your browser."
+                    : "Copy a clean text summary of this plan to share or save."}
+              </p>
             </div>
-          </div>
-          <StressLegend />
-          <div className="grid gap-4 lg:grid-cols-3">
-            {analyses.map((analysis) => (
-              <ScoreCard
-                key={analysis.planId}
-                analysis={analysis}
-                highlighted={analysis.planId === state.activePlanId}
-              />
-            ))}
+            <SectionCard
+              title="Compare plans"
+              description="Stress score, conflicts, and workload at a glance."
+              className="h-full"
+            >
+              <StressLegend />
+              <div className="mt-5 grid gap-4 lg:grid-cols-3 xl:grid-cols-1">
+                {analyses.map((analysis) => (
+                  <ScoreCard
+                    key={analysis.planId}
+                    analysis={analysis}
+                    highlighted={analysis.planId === state.activePlanId}
+                    recommended={analysis.planId === bestPlan?.planId}
+                  />
+                ))}
+              </div>
+            </SectionCard>
           </div>
           <SectionCard
-            title="Side-by-Side Comparison"
-            description="This is the fastest proof point in the submission: three plans, one clear recommendation, and visible tradeoffs."
+            title="Comparison summary"
+            description="See where each plan wins or falls behind before you inspect the details."
           >
-            <ComparisonTable analyses={analyses} bestPlanSummary={bestPlan?.summary ?? null} />
+            <ComparisonTable
+              analyses={analyses}
+              recommendedPlanId={bestPlan?.planId ?? null}
+            />
           </SectionCard>
         </section>
         ) : null}
 
         {hasPlannerData ? (
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_360px]">
+        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_360px]">
           <SectionCard
-            title={`${activeAnalysis.planName} Analysis Snapshot`}
-            description="Every required schedule signal for the selected plan, from conflicts to exam clustering."
+            title="Why this score?"
+            description={`${activeAnalysis.planName} blends weighted category pressure with conflict penalties when those rules apply.`}
           >
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {SNAPSHOT_TILES.map((tile) => {
-                const value = activeAnalysis.metrics[tile.key as keyof typeof activeAnalysis.metrics];
-                const formattedValue =
-                  tile.key === "weeklyClassHours" || tile.key === "weeklyStudyHours"
-                    ? formatHours(Number(value))
-                    : String(value);
-
-                return (
+            <PlanContentTransition motionKey={`score-${state.activePlanId}`}>
+              <ScoreDriversPanel analysis={activeAnalysis} />
+              <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {activePlanSignals.map((signal) => (
                   <div
-                    key={tile.key}
+                    key={signal.label}
                     className="rounded-3xl border border-slate-200 bg-slate-50/80 p-4"
                   >
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                      {tile.label}
+                      {signal.label}
                     </p>
-                    <p className="mt-3 text-2xl font-semibold text-slate-900">{formattedValue}</p>
+                    <p className="mt-3 text-2xl font-semibold text-slate-900">{signal.value}</p>
                   </div>
-                );
-              })}
-            </div>
-          </SectionCard>
-
-          <SectionCard
-            title="Active Plan Summary"
-            description="A quick read on how this option feels in practice."
-          >
-            <div className="space-y-4">
-              <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                  Overall signal
-                </p>
-                <p className="mt-3 text-3xl font-semibold text-slate-950">
-                  {activeAnalysis.metrics.stressScore}
-                </p>
-                <p className="mt-1 text-sm capitalize text-slate-600">
-                  {activeAnalysis.metrics.stressLabel}
-                </p>
+                ))}
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-3xl border border-slate-200 bg-white p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    Weekly commitments
-                  </p>
-                  <p className="mt-2 text-xl font-semibold text-slate-900">
-                    {formatHours(activeAnalysis.metrics.weeklyCommitmentHours)}
-                  </p>
-                </div>
-                <div className="rounded-3xl border border-slate-200 bg-white p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    Tightest exam gap
-                  </p>
-                  <p className="mt-2 text-xl font-semibold text-slate-900">
-                    {activeAnalysis.metrics.tightestExamGapHours === null
-                      ? "Clear"
-                      : `${activeAnalysis.metrics.tightestExamGapHours}h`}
-                  </p>
-                </div>
-              </div>
-              <div className="rounded-3xl border border-slate-200 bg-white p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                  Top recommendation
-                </p>
-                <p className="mt-2 text-sm leading-6 text-slate-700">
-                  {activeAnalysis.recommendations[0] ??
-                    "Add courses to the active plan to generate recommendations."}
-                </p>
-              </div>
-            </div>
-          </SectionCard>
-        </section>
-        ) : null}
-
-        {hasPlannerData ? (
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_360px]">
-          <SectionCard
-            title="Weekly Timetable"
-            description="Course blocks are shown alongside recurring commitments to make pressure points visible."
-          >
-            <Timetable
-              classBlocks={activeAnalysis.classBlocks}
-              commitmentBlocks={activeAnalysis.commitmentBlocks}
-            />
+            </PlanContentTransition>
           </SectionCard>
 
           <div className="space-y-6">
             <SectionCard
-              title="Warning List"
-              description="Red flags that would make this plan harder to sustain."
+              title="Plan summary"
+              description="A quick read on the active option before you inspect the visuals."
             >
-              <WarningList warnings={activeAnalysis.warnings} />
+              <PlanContentTransition motionKey={`summary-${state.activePlanId}`}>
+                <div className="space-y-4">
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      Stress score
+                    </p>
+                    <p className="mt-3 text-3xl font-semibold text-slate-950">
+                      {activeAnalysis.metrics.stressScore}
+                    </p>
+                    <p className="mt-1 text-sm capitalize text-slate-600">
+                      {activeAnalysis.metrics.stressLabel}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-3xl border border-slate-200 bg-white p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                        Weekly commitments
+                      </p>
+                      <p className="mt-2 text-xl font-semibold text-slate-900">
+                        {formatHours(activeAnalysis.metrics.weeklyCommitmentHours)}
+                      </p>
+                    </div>
+                    <div className="rounded-3xl border border-slate-200 bg-white p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                        Tightest exam gap
+                      </p>
+                      <p className="mt-2 text-xl font-semibold text-slate-900">
+                        {activeAnalysis.metrics.tightestExamGapHours === null
+                          ? "Clear"
+                          : `${activeAnalysis.metrics.tightestExamGapHours}h`}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </PlanContentTransition>
             </SectionCard>
 
             <SectionCard
-              title="Recommendation Engine"
-              description="Short rule-based guidance explaining where the plan works or breaks."
+              title="Warnings"
+              description="The biggest risks in the active plan."
             >
-              <RecommendationPanel recommendations={activeAnalysis.recommendations} />
+              <PlanContentTransition motionKey={`warnings-${state.activePlanId}`}>
+                <WarningList warnings={activeAnalysis.warnings} />
+              </PlanContentTransition>
+            </SectionCard>
+
+            <SectionCard
+              title="Why this plan works"
+              description="Short guidance on whether to keep, lighten, or rebuild it."
+            >
+              <PlanContentTransition motionKey={`recommendations-${state.activePlanId}`}>
+                <RecommendationPanel recommendations={activeAnalysis.recommendations} />
+              </PlanContentTransition>
             </SectionCard>
           </div>
         </section>
         ) : null}
 
         {hasPlannerData ? (
-        <section className="space-y-6">
+        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
           <SectionCard
-            title="Workload by Weekday"
-            description="Class, study, and commitment hours stacked across the week for the active plan."
+            title={`${activeAnalysis.planName} timetable`}
+            description="Course blocks and recurring commitments appear together so pressure points are easy to spot."
           >
-            <WeekdayWorkloadChart dayLoads={activeAnalysis.dayLoads} />
+            <PlanContentTransition motionKey={`timetable-${state.activePlanId}`}>
+              <Timetable
+                classBlocks={activeAnalysis.classBlocks}
+                commitmentBlocks={activeAnalysis.commitmentBlocks}
+              />
+            </PlanContentTransition>
+          </SectionCard>
+
+          <SectionCard
+            title="Weekly workload"
+            description="See where class, study, and commitments stack up across the week."
+          >
+            <PlanContentTransition motionKey={`workload-${state.activePlanId}`}>
+              <WeekdayWorkloadChart dayLoads={activeAnalysis.dayLoads} />
+            </PlanContentTransition>
           </SectionCard>
         </section>
         ) : null}
@@ -386,18 +466,18 @@ export default function HomePage() {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
-                Planner Workspace
+                Edit your semester
               </p>
               <h2 className="mt-2 text-3xl font-serif text-slate-950">
-                Customize the sample or build your own plan
+                Adjust the sample or build your own
               </h2>
             </div>
             <div className="flex flex-wrap gap-3">
               <button type="button" className="button-secondary" onClick={handleSampleLoad}>
-                Load demo sample
+                Try sample semester
               </button>
               <button type="button" className="button-secondary" onClick={handleBuildOwn}>
-                Start blank
+                Build your own plan
               </button>
             </div>
           </div>
@@ -405,22 +485,22 @@ export default function HomePage() {
           <div className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
             <div className="space-y-6">
               <SectionCard
-                title="Course Input"
-                description="Add courses manually with time, workload, difficulty, and major deadlines."
+                title="Course setup"
+                description="Enter class times, weekly workload, difficulty, and major deadlines."
               >
                 <CourseForm courses={state.courses} onAddCourse={addCourse} />
               </SectionCard>
 
               <SectionCard
-                title="Commitment Input"
-                description="Include work, clubs, exercise, or personal blocks so schedule analysis stays realistic."
+                title="Commitments"
+                description="Include work, clubs, exercise, or other recurring time outside class."
               >
                 <CommitmentForm onAddCommitment={addCommitment} />
               </SectionCard>
 
               <SectionCard
                 title="Preferences"
-                description="Set the sleep and daily capacity limits used by the scoring engine."
+                description="Set the limits used to flag heavy days and sleep conflicts."
               >
                 <PreferencesCard preferences={state.preferences} onUpdate={updatePreferences} />
               </SectionCard>
@@ -428,8 +508,8 @@ export default function HomePage() {
 
             <div className="space-y-6">
               <SectionCard
-                title="Plan Builder"
-                description="Assign every course to any combination of Plan A, Plan B, and Plan C."
+                title="Edit plans"
+                description="Toggle courses into any plan and the recommendation updates immediately."
                 action={
                   <span className="badge-soft">
                     {state.courses.length} courses · {state.commitments.length} commitments
@@ -439,6 +519,7 @@ export default function HomePage() {
                 <PlanTabs
                   analyses={analyses}
                   activePlanId={state.activePlanId}
+                  recommendedPlanId={bestPlan?.planId ?? null}
                   onChange={setActivePlan}
                 />
                 <div className="mt-6">
@@ -453,7 +534,7 @@ export default function HomePage() {
               </SectionCard>
 
               <SectionCard
-                title="Outside Commitments"
+                title="Outside commitments"
                 description="These recurring blocks stay active across every candidate plan."
               >
                 <CommitmentList commitments={state.commitments} onRemove={removeCommitment} />

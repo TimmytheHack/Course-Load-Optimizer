@@ -2,6 +2,7 @@
 
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { DayLoad } from "@/lib/types";
 
 interface WeekdayWorkloadChartProps {
@@ -9,6 +10,8 @@ interface WeekdayWorkloadChartProps {
 }
 
 export function WeekdayWorkloadChart({ dayLoads }: WeekdayWorkloadChartProps) {
+  const prefersReducedMotion = usePrefersReducedMotion();
+
   return (
     <div>
       <div className="mb-4 flex flex-wrap gap-2">
@@ -39,9 +42,30 @@ export function WeekdayWorkloadChart({ dayLoads }: WeekdayWorkloadChartProps) {
               boxShadow: "0 10px 35px rgba(15, 23, 42, 0.1)",
             }}
           />
-          <Bar dataKey="classHours" stackId="hours" fill="#111827" radius={[8, 8, 0, 0]} />
-          <Bar dataKey="studyHours" stackId="hours" fill="#6b7280" radius={[8, 8, 0, 0]} />
-          <Bar dataKey="commitmentHours" stackId="hours" fill="#cbd5e1" radius={[8, 8, 0, 0]} />
+          <Bar
+            dataKey="classHours"
+            stackId="hours"
+            fill="#111827"
+            radius={[8, 8, 0, 0]}
+            isAnimationActive={!prefersReducedMotion}
+            animationDuration={260}
+          />
+          <Bar
+            dataKey="studyHours"
+            stackId="hours"
+            fill="#6b7280"
+            radius={[8, 8, 0, 0]}
+            isAnimationActive={!prefersReducedMotion}
+            animationDuration={260}
+          />
+          <Bar
+            dataKey="commitmentHours"
+            stackId="hours"
+            fill="#cbd5e1"
+            radius={[8, 8, 0, 0]}
+            isAnimationActive={!prefersReducedMotion}
+            animationDuration={260}
+          />
         </BarChart>
       </ResponsiveContainer>
       </div>

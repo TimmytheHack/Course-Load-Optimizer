@@ -4,24 +4,52 @@ import { formatHours } from "@/lib/utils";
 interface ScoreCardProps {
   analysis: PlanAnalysis;
   highlighted?: boolean;
+  recommended?: boolean;
 }
 
-export function ScoreCard({ analysis, highlighted = false }: ScoreCardProps) {
+export function ScoreCard({ analysis, highlighted = false, recommended = false }: ScoreCardProps) {
   const { metrics } = analysis;
+  const quickRead = recommended
+    ? "Lowest pressure overall."
+    : analysis.warnings[0]
+      ? `Main issue: ${analysis.warnings[0].title.toLowerCase()}.`
+      : "Open this plan to review the tradeoffs.";
 
   return (
     <article
       className={[
-        "relative overflow-hidden rounded-[30px] border p-5 transition",
+        "relative overflow-hidden rounded-[30px] border p-5 transition-all duration-200 ease-out motion-reduce:transition-none",
         highlighted
-          ? "border-slate-900 bg-[linear-gradient(155deg,#0f172a,#1f2937)] text-white shadow-[0_26px_56px_rgba(15,23,42,0.18)]"
+          ? "border-slate-900 bg-[linear-gradient(155deg,#0f172a,#1f2937)] text-white shadow-[0_26px_56px_rgba(15,23,42,0.18)] motion-safe:-translate-y-0.5"
           : "border-slate-200/80 bg-white/95 text-slate-900 shadow-[0_12px_32px_rgba(15,23,42,0.06)]",
       ].join(" ")}
     >
       <div className={["absolute inset-x-5 top-0 h-px", highlighted ? "bg-white/20" : "bg-slate-200"].join(" ")} />
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className={highlighted ? "text-white/65" : "text-slate-500"}>{analysis.planName}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className={highlighted ? "text-white/65" : "text-slate-500"}>{analysis.planName}</p>
+            {recommended ? (
+              <span
+                className={[
+                  "rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]",
+                  highlighted ? "bg-white/15 text-white" : "border border-slate-200 bg-slate-100 text-slate-700",
+                ].join(" ")}
+              >
+                Recommended
+              </span>
+            ) : null}
+            {highlighted ? (
+              <span
+                className={[
+                  "rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]",
+                  "bg-white/15 text-white",
+                ].join(" ")}
+              >
+                Selected
+              </span>
+            ) : null}
+          </div>
           {analysis.planProfileLabel ? (
             <p className={["mt-1 text-sm font-medium", highlighted ? "text-white/80" : "text-slate-600"].join(" ")}>
               {analysis.planProfileLabel}
@@ -68,6 +96,9 @@ export function ScoreCard({ analysis, highlighted = false }: ScoreCardProps) {
           <p className="mt-2 text-lg font-semibold">{metrics.heavyDayCount}</p>
         </div>
       </div>
+      <p className={["mt-4 text-sm leading-6", highlighted ? "text-white/75" : "text-slate-600"].join(" ")}>
+        {quickRead}
+      </p>
     </article>
   );
 }

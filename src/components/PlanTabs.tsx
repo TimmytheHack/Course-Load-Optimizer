@@ -3,14 +3,21 @@ import { PlanAnalysis, PlanId } from "@/lib/types";
 interface PlanTabsProps {
   analyses: PlanAnalysis[];
   activePlanId: PlanId;
+  recommendedPlanId?: PlanId | null;
   onChange: (planId: PlanId) => void;
 }
 
-export function PlanTabs({ analyses, activePlanId, onChange }: PlanTabsProps) {
+export function PlanTabs({
+  analyses,
+  activePlanId,
+  recommendedPlanId = null,
+  onChange,
+}: PlanTabsProps) {
   return (
     <div className="grid gap-3 lg:grid-cols-3">
       {analyses.map((analysis) => {
         const isActive = analysis.planId === activePlanId;
+        const isRecommended = analysis.planId === recommendedPlanId;
 
         return (
           <button
@@ -18,9 +25,9 @@ export function PlanTabs({ analyses, activePlanId, onChange }: PlanTabsProps) {
             type="button"
             onClick={() => onChange(analysis.planId)}
             className={[
-              "relative min-h-[188px] rounded-[26px] border px-5 py-4 text-left transition",
+              "relative min-h-[188px] rounded-[26px] border px-5 py-4 text-left transition-all duration-200 ease-out motion-reduce:transition-none",
               isActive
-                ? "border-slate-900 bg-[linear-gradient(155deg,#0f172a,#1f2937)] text-white shadow-[0_24px_50px_rgba(15,23,42,0.18)]"
+                ? "border-slate-900 bg-[linear-gradient(155deg,#0f172a,#1f2937)] text-white shadow-[0_24px_50px_rgba(15,23,42,0.18)] motion-safe:-translate-y-0.5 motion-safe:scale-[1.01]"
                 : "border-slate-200/80 bg-white text-slate-800 shadow-sm hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg",
             ].join(" ")}
           >
@@ -28,6 +35,16 @@ export function PlanTabs({ analyses, activePlanId, onChange }: PlanTabsProps) {
             <div className="flex items-center justify-between gap-3">
               <span className="text-base font-semibold">{analysis.planName}</span>
               <div className="flex flex-wrap justify-end gap-2">
+                {isRecommended ? (
+                  <span
+                    className={[
+                      "rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.16em]",
+                      isActive ? "bg-white/15 text-white" : "border border-slate-900 bg-slate-900 text-white",
+                    ].join(" ")}
+                  >
+                    Recommended
+                  </span>
+                ) : null}
                 {analysis.courses.length > 0 && analysis.courses.length <= 4 ? (
                   <span
                     className={[

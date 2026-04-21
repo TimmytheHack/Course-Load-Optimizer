@@ -2,6 +2,8 @@ interface RecommendationPanelProps {
   recommendations: string[];
 }
 
+const RECOMMENDATION_LABELS = ["Overall", "Biggest driver", "Best next step", "Next note"];
+
 export function RecommendationPanel({ recommendations }: RecommendationPanelProps) {
   return (
     <div className="space-y-3">
@@ -10,12 +12,10 @@ export function RecommendationPanel({ recommendations }: RecommendationPanelProp
           key={`${recommendation}-${index}`}
           className="rounded-[26px] border border-slate-200/80 bg-white/95 p-4 shadow-sm"
         >
-          <div className="flex items-start gap-3">
-            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-600">
-              {index + 1}
-            </span>
-            <p className="text-sm leading-6 text-slate-700">{recommendation}</p>
-          </div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+            {RECOMMENDATION_LABELS[index] ?? `Note ${index + 1}`}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-slate-700">{recommendation}</p>
         </article>
       ))}
     </div>

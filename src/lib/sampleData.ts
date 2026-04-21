@@ -220,5 +220,5 @@ export const samplePlannerState: PlannerState = {
   commitments: sampleCommitments,
   preferences: samplePreferences,
   plans: samplePlans,
-  activePlanId: "planA",
+  activePlanId: "planB",
 };

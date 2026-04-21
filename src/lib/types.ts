@@ -95,6 +95,7 @@ export interface WarningItem {
   severity: Severity;
   title: string;
   detail: string;
+  action?: string;
 }
 
 export interface DayLoad {

@@ -14,7 +14,7 @@ export function WarningList({ warnings }: WarningListProps) {
   if (warnings.length === 0) {
     return (
       <div className="rounded-[26px] border border-emerald-200 bg-[linear-gradient(180deg,#f0fdf4,#ecfdf5)] p-5 text-sm text-emerald-900 shadow-sm">
-        No major warning flags. This plan clears the biggest schedule-risk checks.
+        This version looks clean right now. No major schedule or deadline flags were detected.
       </div>
     );
   }
@@ -38,6 +38,11 @@ export function WarningList({ warnings }: WarningListProps) {
             </span>
           </div>
           <p className="mt-3 text-sm leading-6">{warning.detail}</p>
+          {warning.action ? (
+            <p className="mt-3 text-sm font-medium leading-6">
+              <span className="font-semibold">Suggested fix:</span> {warning.action}
+            </p>
+          ) : null}
         </article>
       ))}
     </div>

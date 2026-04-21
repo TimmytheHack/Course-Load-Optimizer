@@ -1,6 +1,16 @@
 import { ScoreBreakdown } from "@/lib/types";
 import { clamp, getStressTone } from "@/lib/utils";
 
+export const SCORE_WEIGHTS: Record<keyof ScoreBreakdown, number> = {
+  courseIntensity: 0.14,
+  workloadIntensity: 0.24,
+  dailyBalance: 0.18,
+  scheduleFriction: 0.12,
+  commitmentPressure: 0.11,
+  examPressure: 0.11,
+  conflictPressure: 0.1,
+};
+
 function scale(value: number, low: number, high: number) {
   if (value <= low) {
     return 0;
@@ -69,13 +79,13 @@ export function scorePlan(rawMetrics: {
   };
 
   let stressScore =
-    breakdown.courseIntensity * 0.14 +
-    breakdown.workloadIntensity * 0.24 +
-    breakdown.dailyBalance * 0.18 +
-    breakdown.scheduleFriction * 0.12 +
-    breakdown.commitmentPressure * 0.11 +
-    breakdown.examPressure * 0.11 +
-    breakdown.conflictPressure * 0.1;
+    breakdown.courseIntensity * SCORE_WEIGHTS.courseIntensity +
+    breakdown.workloadIntensity * SCORE_WEIGHTS.workloadIntensity +
+    breakdown.dailyBalance * SCORE_WEIGHTS.dailyBalance +
+    breakdown.scheduleFriction * SCORE_WEIGHTS.scheduleFriction +
+    breakdown.commitmentPressure * SCORE_WEIGHTS.commitmentPressure +
+    breakdown.examPressure * SCORE_WEIGHTS.examPressure +
+    breakdown.conflictPressure * SCORE_WEIGHTS.conflictPressure;
 
   if (rawMetrics.classConflictCount > 0) {
     stressScore = Math.max(stressScore, 78 + rawMetrics.classConflictCount * 8);
