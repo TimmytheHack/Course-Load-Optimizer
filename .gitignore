@@ -1,0 +1,7 @@
+.next
+build
+node_modules
+out
+dist
+.DS_Store
+*.log
